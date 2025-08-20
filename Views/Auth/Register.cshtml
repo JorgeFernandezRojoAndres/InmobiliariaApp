@@ -1,0 +1,31 @@
+@model InmobiliariaApp.Models.ViewModels.UsuarioRegistroViewModel
+
+<h2>Registrarse</h2>
+
+<form asp-action="Register" method="post" enctype="multipart/form-data">
+    <div>
+        <label asp-for="Nombre"></label>
+        <input asp-for="Nombre" />
+    </div>
+    <div>
+        <label asp-for="Apellido"></label>
+        <input asp-for="Apellido" />
+    </div>
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" type="email" />
+    </div>
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" type="password" />
+    </div>
+    <div>
+        <label>Avatar</label>
+        <input type="file" name="avatar" />
+    </div>
+    <button type="submit">Registrar</button>
+</form>
+
+<div style="color:red">
+    @Html.ValidationSummary()
+</div>

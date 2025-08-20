@@ -1,0 +1,27 @@
+@model IEnumerable<InmobiliariaApp.Models.Persona>
+
+<h2>Listado de Personas</h2>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>DNI</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var persona in Model)
+    {
+        <tr>
+            <td>@persona.Id</td>
+            <td>@persona.Nombre</td>
+            <td>@persona.Apellido</td>
+            <td>@persona.Documento</td>
+            <td>@persona.Email</td>
+        </tr>
+    }
+    </tbody>
+</table>
