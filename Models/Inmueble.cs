@@ -2,13 +2,15 @@ namespace InmobiliariaApp.Models
 {
     public class Inmueble
     {
-        public int Id { get; set; }   // ⚠️ importante: usar "Id" y no "ID"
+        public int Id { get; set; }
         public string Direccion { get; set; } = string.Empty;
+        public string Tipo { get; set; } = string.Empty; // 👈 nuevo campo
         public int MetrosCuadrados { get; set; }
         public decimal Precio { get; set; }
         public int PropietarioId { get; set; }
         public bool Activo { get; set; } = true;
+
+        // Prop extra para mostrar nombre del propietario
         public string NombrePropietario { get; set; } = string.Empty;
-        public string Uso { get; set; } = string.Empty;
     }
 }

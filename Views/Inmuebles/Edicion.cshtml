@@ -1,31 +1,40 @@
 @model InmobiliariaApp.Models.Inmueble
 
-<h2>@(Model.Id == 0 ? "Nuevo Inmueble" : "Editar Inmueble")</h2>
+<h2>Edición de Inmueble</h2>
 
 <form asp-action="Guardar" method="post">
     <input type="hidden" asp-for="Id" />
 
-    <div class="form-group">
-        <label asp-for="Direccion"></label>
+    <div class="mb-3">
+        <label asp-for="Direccion" class="form-label"></label>
         <input asp-for="Direccion" class="form-control" />
+        <span asp-validation-for="Direccion" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Precio"></label>
-        <input asp-for="Precio" class="form-control" type="number" />
+    <div class="mb-3">
+        <label asp-for="Tipo" class="form-label"></label> <!-- 🔹 antes estaba Uso -->
+        <input asp-for="Tipo" class="form-control" />
+        <span asp-validation-for="Tipo" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="Uso"></label>
-        <input asp-for="Uso" class="form-control" />
+    <div class="mb-3">
+        <label asp-for="MetrosCuadrados" class="form-label"></label>
+        <input asp-for="MetrosCuadrados" class="form-control" />
+        <span asp-validation-for="MetrosCuadrados" class="text-danger"></span>
     </div>
 
-    <div class="form-group">
-        <label asp-for="PropietarioId">Propietario</label>
-        <select asp-for="PropietarioId" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Propietarios, "Id", "Nombre"))"></select>
+    <div class="mb-3">
+        <label asp-for="Precio" class="form-label"></label>
+        <input asp-for="Precio" class="form-control" />
+        <span asp-validation-for="Precio" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">Guardar</button>
-    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+    <div class="mb-3">
+        <label asp-for="PropietarioId" class="form-label"></label>
+        <input asp-for="PropietarioId" class="form-control" />
+        <span asp-validation-for="PropietarioId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
 </form>

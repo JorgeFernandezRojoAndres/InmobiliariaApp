@@ -1,0 +1,17 @@
+@model InmobiliariaApp.Models.Persona
+<h2>Eliminar Inquilino</h2>
+
+<p>¿Estás seguro que deseas eliminar este inquilino?</p>
+
+<dl class="row">
+    <dt class="col-sm-2">Nombre</dt>
+    <dd class="col-sm-10">@Model.Nombre</dd>
+    <dt class="col-sm-2">Apellido</dt>
+    <dd class="col-sm-10">@Model.Apellido</dd>
+</dl>
+
+<form asp-action="DeleteConfirmed" method="post">
+    <input type="hidden" asp-for="Id"/>
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

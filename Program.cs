@@ -4,15 +4,10 @@ using BCrypt.Net;
 using InmobiliariaApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// 👉 Agregar soporte para controladores y vistas
 builder.Services.AddControllersWithViews();
-
-// 👉 Registrar repositorios para inyección de dependencias
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 
-// ✅ Registrar RepoUsuario tanto con la interfaz como con la clase concreta
 builder.Services.AddScoped<IRepoUsuario>(sp =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

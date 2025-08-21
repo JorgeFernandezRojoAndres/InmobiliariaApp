@@ -1,4 +1,4 @@
-using MySqlConnector;
+using MySqlConnector; 
 using System.Collections.Generic;
 using InmobiliariaApp.Models;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +19,7 @@ namespace InmobiliariaApp.Repository
         {
             var lista = new List<Persona>();
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email FROM Personas";
+            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email, Tipo FROM Personas";
             using var command = new MySqlCommand(sql, connection);
             connection.Open();
             using var reader = command.ExecuteReader();
@@ -32,7 +32,8 @@ namespace InmobiliariaApp.Repository
                     Nombre = reader.GetString("Nombre"),
                     Apellido = reader.GetString("Apellido"),
                     Documento = reader.GetString("DNI"),
-                    Email = reader.GetString("Email")
+                    Email = reader.GetString("Email"),
+                    Tipo = reader.GetString("Tipo")  // 🔹 nuevo
                 });
             }
             return lista;
@@ -41,7 +42,7 @@ namespace InmobiliariaApp.Repository
         public Persona? ObtenerPorId(int id)
         {
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email FROM Personas WHERE ID=@id";
+            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email, Tipo FROM Personas WHERE ID=@id";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@id", id);
             connection.Open();
@@ -54,7 +55,8 @@ namespace InmobiliariaApp.Repository
                     Nombre = reader.GetString("Nombre"),
                     Apellido = reader.GetString("Apellido"),
                     Documento = reader.GetString("DNI"),
-                    Email = reader.GetString("Email")
+                    Email = reader.GetString("Email"),
+                    Tipo = reader.GetString("Tipo")  // 🔹 nuevo
                 };
             }
             return null;
@@ -63,13 +65,14 @@ namespace InmobiliariaApp.Repository
         public void Alta(Persona p)
         {
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email) 
-                                 VALUES (@nombre, @apellido, @dni, @correo)";
+            const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email, Tipo) 
+                                 VALUES (@nombre, @apellido, @dni, @correo, @tipo)";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@nombre", p.Nombre);
             command.Parameters.AddWithValue("@apellido", p.Apellido);
             command.Parameters.AddWithValue("@dni", p.Documento);
             command.Parameters.AddWithValue("@correo", p.Email);
+            command.Parameters.AddWithValue("@tipo", p.Tipo); // 🔹 nuevo
             connection.Open();
             command.ExecuteNonQuery();
             p.Id = (int)command.LastInsertedId;
@@ -82,13 +85,15 @@ namespace InmobiliariaApp.Repository
                                     Nombre=@nombre, 
                                     Apellido=@apellido, 
                                     DNI=@dni, 
-                                    Email=@correo
+                                    Email=@correo,
+                                    Tipo=@tipo
                                  WHERE ID=@id";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@nombre", p.Nombre);
             command.Parameters.AddWithValue("@apellido", p.Apellido);
             command.Parameters.AddWithValue("@dni", p.Documento);
             command.Parameters.AddWithValue("@correo", p.Email);
+            command.Parameters.AddWithValue("@tipo", p.Tipo); // 🔹 nuevo
             command.Parameters.AddWithValue("@id", p.Id);
             connection.Open();
             command.ExecuteNonQuery();
@@ -102,6 +107,17 @@ namespace InmobiliariaApp.Repository
             command.Parameters.AddWithValue("@id", id);
             connection.Open();
             command.ExecuteNonQuery();
+        }
+
+        // 🔹 Métodos de ayuda para filtrar
+        public List<Persona> ObtenerInquilinos()
+        {
+            return ObtenerTodos().Where(p => p.Tipo == "Inquilino").ToList();
+        }
+
+        public List<Persona> ObtenerPropietarios()
+        {
+            return ObtenerTodos().Where(p => p.Tipo == "Propietario").ToList();
         }
     }
 }
