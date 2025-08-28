@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -26,7 +27,7 @@ namespace InmobiliariaApp.Controllers
         public IActionResult Details(int id)
         {
             var propietario = _repo.ObtenerPorId(id);
-            if (propietario == null || propietario.Tipo != "Propietario")
+            if (propietario == null)
                 return NotFound();
 
             return View(propietario);
@@ -45,9 +46,11 @@ namespace InmobiliariaApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                propietario.Tipo = "Propietario"; // 🔹 se fuerza el tipo
-                _repo.Alta(propietario);
-                return RedirectToAction(nameof(Index));
+                // 🔹 Alta con rol Propietario
+                _repo.Alta(propietario, new List<string> { "Propietario" });
+
+                // 🔹 Redirigir directo al alta de inmueble con el ID del propietario recién creado
+                return RedirectToAction("Create", "Inmuebles", new { propietarioId = propietario.Id });
             }
             return View(propietario);
         }
@@ -56,7 +59,7 @@ namespace InmobiliariaApp.Controllers
         public IActionResult Edit(int id)
         {
             var propietario = _repo.ObtenerPorId(id);
-            if (propietario == null || propietario.Tipo != "Propietario")
+            if (propietario == null)
                 return NotFound();
 
             return View(propietario);
@@ -72,7 +75,6 @@ namespace InmobiliariaApp.Controllers
 
             if (ModelState.IsValid)
             {
-                propietario.Tipo = "Propietario"; // 🔹 se asegura que no cambie
                 _repo.Modificar(propietario);
                 return RedirectToAction(nameof(Index));
             }
@@ -83,7 +85,7 @@ namespace InmobiliariaApp.Controllers
         public IActionResult Delete(int id)
         {
             var propietario = _repo.ObtenerPorId(id);
-            if (propietario == null || propietario.Tipo != "Propietario")
+            if (propietario == null)
                 return NotFound();
 
             return View(propietario);

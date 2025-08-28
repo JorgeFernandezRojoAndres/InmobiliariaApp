@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Repository;
 using InmobiliariaApp.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -15,72 +16,89 @@ namespace InmobiliariaApp.Controllers
             _repo = repo;
         }
 
+        // GET: /Inquilinos
         public IActionResult Index()
         {
             var lista = _repo.ObtenerInquilinos();
             return View(lista);
         }
 
+        // GET: /Inquilinos/Details/5
         public IActionResult Details(int id)
         {
             var inquilino = _repo.ObtenerPorId(id);
-            if (inquilino == null || inquilino.Tipo != "Inquilino") return NotFound();
+            if (inquilino == null)
+                return NotFound();
+
             return View(inquilino);
         }
 
+        // GET: /Inquilinos/Create
         public IActionResult Create()
         {
             return View();
         }
 
+        // POST: /Inquilinos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(Persona model)
         {
             if (ModelState.IsValid)
             {
-                model.Tipo = "Inquilino"; // 👈 forzamos el tipo
-                _repo.Alta(model);
+                // 🔹 Alta con rol Inquilino
+                _repo.Alta(model, new List<string> { "Inquilino" });
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
         }
 
+        // GET: /Inquilinos/Edit/5
         public IActionResult Edit(int id)
         {
             var inquilino = _repo.ObtenerPorId(id);
-            if (inquilino == null || inquilino.Tipo != "Inquilino") return NotFound();
+            if (inquilino == null)
+                return NotFound();
+
             return View(inquilino);
         }
 
+        // POST: /Inquilinos/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Persona model)
         {
-            if (id != model.Id) return BadRequest();
+            if (id != model.Id)
+                return BadRequest();
+
             if (ModelState.IsValid)
             {
-                model.Tipo = "Inquilino"; // 👈 mantenemos tipo
                 _repo.Modificar(model);
                 return RedirectToAction(nameof(Index));
             }
             return View(model);
         }
 
+        // GET: /Inquilinos/Delete/5
         public IActionResult Delete(int id)
         {
             var inquilino = _repo.ObtenerPorId(id);
-            if (inquilino == null || inquilino.Tipo != "Inquilino") return NotFound();
+            if (inquilino == null)
+                return NotFound();
+
             return View(inquilino);
         }
 
+        // POST: /Inquilinos/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
             var inquilino = _repo.ObtenerPorId(id);
-            if (inquilino != null && inquilino.Tipo == "Inquilino")
+            if (inquilino != null)
+            {
                 _repo.Eliminar(id);
+            }
 
             return RedirectToAction(nameof(Index));
         }

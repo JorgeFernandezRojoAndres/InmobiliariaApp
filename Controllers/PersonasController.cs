@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -39,11 +40,17 @@ namespace InmobiliariaApp.Controllers
         // POST: /Personas/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Persona persona)
+        public IActionResult Create(Persona persona, bool esPropietario, bool esInquilino)
         {
             if (ModelState.IsValid)
             {
-                _repoPersona.Alta(persona);
+                var roles = new List<string>();
+                if (esPropietario) roles.Add("Propietario");
+                if (esInquilino) roles.Add("Inquilino");
+
+                // Si no se marca ningún rol, se da de alta sin roles (queda pendiente de asignar luego)
+                _repoPersona.Alta(persona, roles);
+
                 return RedirectToAction(nameof(Index));
             }
             return View(persona);
