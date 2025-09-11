@@ -1,0 +1,49 @@
+﻿@model List<InmobiliariaApp.Models.Propiedad>
+
+@{
+    ViewData["Title"] = "Listado de Propiedades";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (ViewBag.MensajeCookie != null)
+{
+    <p class="alert alert-info">@ViewBag.MensajeCookie</p>
+
+    <form asp-action="BorrarFavorita" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-danger btn-sm">Borrar Favorita</button>
+    </form>
+}
+
+@if (TempData["MensajeBorrado"] != null)
+{
+    <p class="alert alert-warning">@TempData["MensajeBorrado"]</p>
+}
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Precio</th>
+            <th>Dormitorios</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var propiedad in Model)
+        {
+            <tr>
+                <td>@propiedad.Direccion</td>
+                <td>@propiedad.Precio.ToString("C")</td>
+                <td>@propiedad.Dormitorios</td>
+                <td>@propiedad.Descripcion</td>
+                <td>
+                    <a asp-action="MarcarFavorita" asp-route-id="@propiedad.Id" class="btn btn-sm btn-primary">
+                        Marcar como Favorita
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

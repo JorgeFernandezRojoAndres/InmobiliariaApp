@@ -1,0 +1,26 @@
+# Build results
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# IDE settings
+.vs/
+*.swp
+*.tmp
+
+# Packages
+*.nupkg
+*.snupkg
+packages/
+*.dll
+*.exe
+
+# Configuraciones locales
+appsettings.Development.json

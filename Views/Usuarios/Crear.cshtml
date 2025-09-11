@@ -1,0 +1,66 @@
+@model InmobiliariaApp.Models.Usuario
+
+@{
+    ViewData["Title"] = "Crear Usuario";
+}
+
+<h2>Crear Usuario</h2>
+
+<form asp-action="Crear" method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Apellido" class="form-label"></label>
+        <input asp-for="Apellido" class="form-control" />
+        <span asp-validation-for="Apellido" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Rol" class="form-label"></label>
+        <select asp-for="Rol" class="form-select"
+            asp-items="Html.GetEnumSelectList<InmobiliariaApp.Models.RolUsuario>()">
+            <option value="">Seleccione un rol</option>
+        </select>
+        <span asp-validation-for="Rol" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña</label>
+        <input type="password" name="PasswordHash" class="form-control" />
+        <span asp-validation-for="PasswordHash" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Avatar</label>
+        <input type="file" name="AvatarFile" class="form-control" accept="image/*" />
+    </div>
+
+
+    <!-- Campo opcional para mantener compatibilidad -->
+    <div class="mb-3">
+        <label asp-for="AvatarUrl" class="form-label"></label>
+        <input asp-for="AvatarUrl" class="form-control" placeholder="/avatars/default.png" />
+        <span asp-validation-for="AvatarUrl" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

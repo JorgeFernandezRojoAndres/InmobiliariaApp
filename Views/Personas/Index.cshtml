@@ -1,0 +1,39 @@
+@model IEnumerable<InmobiliariaApp.Models.Persona>
+
+<h2>Listado de Personas</h2>
+
+<p>
+    <a class="btn btn-primary" asp-action="Create">+ Nueva Persona</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>DNI</th>
+            <th>Email</th>
+            <th>Tipo</th>   @* 🔹 Nueva columna *@
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var persona in Model)
+    {
+        <tr>
+            <td>@persona.Id</td>
+            <td>@persona.Nombre</td>
+            <td>@persona.Apellido</td>
+            <td>@persona.Documento</td>
+            <td>@persona.Email</td>
+            <td>@persona.Tipo</td>   @* 🔹 Mostrar tipo (Inquilino/Propietario) *@
+            <td>
+                <a asp-action="Details" asp-route-id="@persona.Id" class="btn btn-info btn-sm">Ver</a>
+                <a asp-action="Edit" asp-route-id="@persona.Id" class="btn btn-warning btn-sm">Editar</a>
+                <a asp-action="Delete" asp-route-id="@persona.Id" class="btn btn-danger btn-sm">Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
