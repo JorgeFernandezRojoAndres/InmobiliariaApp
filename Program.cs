@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
-
+builder.Services.AddScoped<IRepoContrato, RepoContrato>();
 builder.Services.AddScoped<IRepoUsuario>(sp =>
 {
     var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");

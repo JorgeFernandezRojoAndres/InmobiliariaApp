@@ -1,0 +1,131 @@
+# File Tree: InmobiliariaApp-main
+
+Generated on: 9/11/2025, 3:59:06 PM
+Root path: `f:\Proyectos\InmobiliariaApp-main\InmobiliariaApp-main`
+
+```
+├── 📁 .git/ 🚫 (auto-hidden)
+├── 📁 Archivos diagramas bas de datos/
+│   ├── 🖼️ diagrama de clase.jpg
+│   ├── 🖼️ diagrama er.jpg
+│   └── 🗄️ mi_base_datos.sql.sql
+├── 📁 Controllers/
+│   ├── 📁 Archivos diagramas bas de datos/
+│   │   ├── 🖼️ diagrama de clase.jpg
+│   │   ├── 🖼️ diagrama er.jpg
+│   │   └── 🗄️ mi_base_datos.sql.sql
+│   ├── 🟣 AuthController.cs
+│   ├── 🟣 ContratosController.cs
+│   ├── 🟣 DbSeeder.cs
+│   ├── 🟣 HomeController.cs
+│   ├── 🟣 InmueblesController.cs
+│   ├── 🟣 InquilinosController.cs
+│   ├── 🟣 PersonasController.cs
+│   ├── 🟣 PropietariosController.cs
+│   └── 🟣 UsuariosController.cs
+├── 📁 Models/
+│   ├── 📁 ViewModels/
+│   │   ├── 🟣 LoginViewModel.cs
+│   │   └── 🟣 UsuarioRegistroViewModel.cs
+│   ├── 🟣 BaseModel.cs
+│   ├── 🟣 Contrato.cs
+│   ├── 🟣 ErrorViewModel.cs
+│   ├── 🟣 Inmueble.cs
+│   ├── 🟣 Inquilino.cs
+│   ├── 🟣 Persona.cs
+│   ├── 🟣 Propiedad.cs
+│   ├── 🟣 Propietario.cs
+│   ├── 🟣 RolUsuario.cs
+│   └── 🟣 Usuario.cs
+├── 📁 Properties/
+│   └── 📄 launchSettings.json
+├── 📁 Repository/
+│   ├── 🟣 IRepoUsuario.cs
+│   ├── 🟣 RepoInmueble.cs
+│   ├── 🟣 RepoPersona.cs
+│   └── 🟣 RepoUsuario.cs
+├── 📁 Views/
+│   ├── 📁 Auth/
+│   │   ├── 📄 Login.cshtml
+│   │   └── 📄 Register.cshtml
+│   ├── 📁 Contratos/
+│   │   ├── 📄 Create.cshtml
+│   │   ├── 📄 Delete.cshtml
+│   │   ├── 📄 Details.cshtml
+│   │   ├── 📄 Edit.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📁 Home/
+│   │   ├── 📄 Index.cshtml
+│   │   └── 📄 Privacy.cshtml
+│   ├── 📁 Inmuebles/
+│   │   ├── 📄 Edicion.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📁 Inquilinos/
+│   │   ├── 📄 Create.cshtml
+│   │   ├── 📄 Delete.cshtml
+│   │   ├── 📄 Details.cshtml
+│   │   ├── 📄 Edit.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📁 Personas/
+│   │   ├── 📄 Create.cshtml
+│   │   ├── 📄 Delete.cshtml
+│   │   ├── 📄 Details.cshtml
+│   │   ├── 📄 Edit.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📁 Propietarios/
+│   │   ├── 📄 Create.cshtml
+│   │   ├── 📄 Delete.cshtml
+│   │   ├── 📄 Details.cshtml
+│   │   ├── 📄 Edit.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📁 Shared/
+│   │   ├── 📄 Error.cshtml
+│   │   ├── 📄 _Layout.cshtml
+│   │   ├── 🎨 _Layout.cshtml.css
+│   │   └── 📄 _ValidationScriptsPartial.cshtml
+│   ├── 📁 Usuarios/
+│   │   ├── 📄 Crear.cshtml
+│   │   ├── 📄 Editar.cshtml
+│   │   ├── 📄 Eliminar.cshtml
+│   │   └── 📄 Index.cshtml
+│   ├── 📄 _ViewImports.cshtml
+│   └── 📄 _ViewStart.cshtml
+├── 📁 bin/ 🚫 (auto-hidden)
+├── 📁 obj/ 🚫 (auto-hidden)
+├── 📁 wwwroot/
+│   ├── 📁 avatars/
+│   │   ├── 🖼️ 19d86a88-7180-4002-a941-56d3ea679b7b.jpg
+│   │   ├── 🖼️ 31c211f0-4590-4c05-872b-ba9a915d27e6.jpg
+│   │   ├── 🖼️ 38167a4c-05b0-41fe-8ea2-2776ba7885e9.jpg
+│   │   ├── 🖼️ 5c41fc15-d4e2-4b5e-bd96-6ff37397ad79.jpg
+│   │   ├── 🖼️ ded447e0-bc73-4ad7-9614-bc047302164f.jpg
+│   │   └── 🖼️ e3c1a4c0-c0ee-41da-82f6-9a0cad0aa6ac.jpg
+│   ├── 📁 css/
+│   │   └── 🎨 site.css
+│   ├── 📁 js/
+│   │   └── 📄 site.js
+│   ├── 📁 lib/
+│   │   ├── 📁 bootstrap/
+│   │   │   ├── 📁 dist/ 🚫 (auto-hidden)
+│   │   │   └── 📜 LICENSE
+│   │   ├── 📁 jquery/
+│   │   │   ├── 📁 dist/ 🚫 (auto-hidden)
+│   │   │   └── 📜 LICENSE.txt
+│   │   ├── 📁 jquery-validation/
+│   │   │   ├── 📁 dist/ 🚫 (auto-hidden)
+│   │   │   └── 📜 LICENSE.md
+│   │   └── 📁 jquery-validation-unobtrusive/
+│   │       ├── 📁 dist/ 🚫 (auto-hidden)
+│   │       └── 📜 LICENSE.txt
+│   └── 🖼️ favicon.ico
+├── 🚫 .gitignore
+├── 🟣 InmobiliariaApp.csproj
+├── 🟣 InmobiliariaApp.sln
+├── 🟣 Program.cs
+├── 📝 Untitled-1.md
+├── 📄 appsettings.json
+└── 📄 structure.json
+```
+
+---
+*Generated by FileTree Pro Extension*
