@@ -1,0 +1,42 @@
+@model InmobiliariaApp.Models.Pago
+
+@{
+    ViewData["Title"] = "Editar Pago";
+}
+
+<h2>Editar Pago</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="form-group">
+        <label asp-for="ContratoId" class="control-label">Contrato</label>
+        <select asp-for="ContratoId" class="form-control"
+                asp-items="@(new SelectList(ViewBag.Contratos, "Id", "Descripcion", Model.ContratoId))">
+            <option value="">-- Seleccioná un contrato --</option>
+        </select>
+        <span asp-validation-for="ContratoId" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="FechaPago" class="control-label">Fecha de Pago</label>
+        <input asp-for="FechaPago" type="date" class="form-control" />
+        <span asp-validation-for="FechaPago" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Detalle" class="control-label">Detalle</label>
+        <input asp-for="Detalle" class="form-control" />
+        <span asp-validation-for="Detalle" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Importe" class="control-label">Importe</label>
+        <input asp-for="Importe" type="number" step="0.01" class="form-control" />
+        <span asp-validation-for="Importe" class="text-danger"></span>
+    </div>
+
+    <br />
+    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

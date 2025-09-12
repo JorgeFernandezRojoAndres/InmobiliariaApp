@@ -48,25 +48,18 @@ namespace InmobiliariaApp.Controllers
                     repo.Crear(contrato);
                     return RedirectToAction(nameof(Index));
                 }
-                catch (InvalidOperationException ex)
-                {
-                    // 🚨 Validación de lógica propia en RepoContrato
-                    ModelState.AddModelError("", ex.Message);
-                }
                 catch (MySql.Data.MySqlClient.MySqlException ex)
                 {
-                    // 🚨 Error levantado por el trigger
-                    if (ex.Message.Contains("❌"))
-                        ModelState.AddModelError("", ex.Message);
-                    else
-                        ModelState.AddModelError("", "⚠️ Error inesperado al guardar el contrato.");
+                    // Trigger lanzó SIGNAL
+                    ModelState.AddModelError("", ex.Message);
                 }
             }
 
-            // recargar selects
+            // Recargar selects
             CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
             return View(contrato);
         }
+
 
 
         public IActionResult Edit(int id)

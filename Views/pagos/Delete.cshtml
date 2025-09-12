@@ -1,0 +1,23 @@
+@model InmobiliariaApp.Models.Pago
+
+@{
+    ViewData["Title"] = "Eliminar Pago";
+}
+
+<h2>Eliminar Pago</h2>
+
+<div class="alert alert-warning">
+    <p>¿Seguro que querés eliminar este pago?</p>
+    <ul>
+        <li><strong>Contrato:</strong> @Model.ContratoDescripcion</li>
+        <li><strong>Fecha:</strong> @Model.FechaPago.ToShortDateString()</li>
+        <li><strong>Detalle:</strong> @Model.Detalle</li>
+        <li><strong>Importe:</strong> @Model.Importe.ToString("C")</li>
+    </ul>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Eliminar</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>

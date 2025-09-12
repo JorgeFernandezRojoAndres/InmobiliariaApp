@@ -1,0 +1,45 @@
+@model IEnumerable<InmobiliariaApp.Models.Pago>
+
+@{
+    ViewData["Title"] = "Pagos";
+}
+
+<h2>Pagos</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-success">➕ Nuevo Pago</a>
+</p>
+
+<table class="table table-bordered table-hover">
+    <thead class="table-light">
+        <tr>
+            <th>Contrato</th>
+            <th>Fecha</th>
+            <th>Detalle</th>
+            <th>Importe</th>
+            <th style="width: 220px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.ContratoDescripcion</td>
+                <td>@item.FechaPago.ToShortDateString()</td>
+                <td>@item.Detalle</td>
+                <td>@item.Importe.ToString("C")</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm me-1">
+                        <i class="bi bi-eye"></i> Detalles
+                    </a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm me-1">
+                        <i class="bi bi-pencil"></i> Editar
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash"></i> Eliminar
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

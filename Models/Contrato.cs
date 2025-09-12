@@ -6,7 +6,6 @@ namespace InmobiliariaApp.Models
     {
         public int Id { get; set; }
 
-
         public int IdInquilino { get; set; }
         public Inquilino? Inquilino { get; set; }
 
@@ -19,5 +18,15 @@ namespace InmobiliariaApp.Models
         public decimal MontoMensual { get; set; }
 
         public string? Estado { get; set; }
+
+        // 🔹 Propiedad calculada para mostrar en dropdowns y vistas
+        public string Descripcion
+        {
+            get
+            {
+                var inmueble = Inmueble != null ? Inmueble.Direccion : $"Inmueble {IdInmueble}";
+                return $"Contrato #{Id} - {inmueble} - {FechaInicio:dd/MM/yyyy} a {FechaFin:dd/MM/yyyy} (${MontoMensual})";
+            }
+        }
     }
 }

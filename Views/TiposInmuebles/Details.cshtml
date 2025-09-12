@@ -1,0 +1,17 @@
+@model InmobiliariaApp.Models.TipoInmueble
+
+@{
+    ViewData["Title"] = "Detalles del Tipo de Inmueble";
+}
+
+<h2>Detalles del Tipo de Inmueble</h2>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Nombre: @Model.Nombre</h5>
+    </div>
+</div>
+
+<br />
+<a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Editar</a>
+<a asp-action="Index" class="btn btn-secondary">Volver</a>
