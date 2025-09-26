@@ -24,8 +24,7 @@ namespace InmobiliariaApp.Repository
             cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
             cmd.Parameters.AddWithValue("@Apellido", usuario.Apellido);
             cmd.Parameters.AddWithValue("@Rol", usuario.Rol.ToString());
-            cmd.Parameters.AddWithValue("@AvatarUrl", (object?)usuario.AvatarUrl ?? DBNull.Value);
-
+            cmd.Parameters.AddWithValue("@AvatarUrl", usuario.AvatarUrl);
             cmd.ExecuteNonQuery();
         }
 
@@ -140,8 +139,7 @@ namespace InmobiliariaApp.Repository
             cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
             cmd.Parameters.AddWithValue("@Apellido", usuario.Apellido);
             cmd.Parameters.AddWithValue("@Rol", usuario.Rol.ToString());
-            cmd.Parameters.AddWithValue("@AvatarUrl", (object?)usuario.AvatarUrl ?? DBNull.Value);
-
+            cmd.Parameters.AddWithValue("@AvatarUrl", usuario.AvatarUrl);
             cmd.ExecuteNonQuery();
         }
 

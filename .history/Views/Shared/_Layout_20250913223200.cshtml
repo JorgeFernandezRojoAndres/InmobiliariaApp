@@ -77,30 +77,16 @@
                     <ul class="navbar-nav ms-auto">
                         @if (User?.Identity?.IsAuthenticated ?? false)
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="perfilDropdown"
-                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="@(User.FindFirst("AvatarUrl")?.Value ?? "/avatars/default.png")" alt="Avatar"
-                                        class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;" />
-                                    <span class="d-none d-md-inline">
-                                        @User.FindFirst("FullName")?.Value
-                                    </span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-                                    <li class="dropdown-item-text">
-                                        <small class="text-muted">Rol:
-                                            @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small>
-                                    </li>
-                                    <li>
-                                        <hr class="dropdown-divider" />
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Perfil" asp-action="Editar">Mi Perfil</a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
-                                    </li>
-                                </ul>
+                            <li class="nav-item d-flex align-items-center">
+                                <img src="@(User.FindFirst("AvatarUrl")?.Value ?? "/avatars/default.png")" alt="Avatar"
+                                    class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;" />
+
+                                <span class="navbar-text me-3 d-none d-md-inline">
+                                    @User.FindFirst("FullName")?.Value (@User.FindFirst(ClaimTypes.Role)?.Value)
+                                </span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
                             </li>
                         }
                         else
@@ -113,7 +99,6 @@
                             </li>
                         }
                     </ul>
-
                 </div>
             </div>
         </nav>

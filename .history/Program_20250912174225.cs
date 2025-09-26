@@ -2,7 +2,6 @@ using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using BCrypt.Net;
 using InmobiliariaApp.Data;
-using Microsoft.Extensions.FileProviders; // 🔹 necesario para PhysicalFileProvider
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
@@ -47,16 +46,8 @@ var app = builder.Build();
 
 app.UseRouting();
 
-// 👉 Habilitar archivos estáticos generales
-app.UseStaticFiles();   
-
-// 👉 Habilitar carpeta avatars aunque se creen en runtime
-app.UseStaticFiles(new StaticFileOptions
-{
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars")),
-    RequestPath = "/avatars"
-});
+// 👉 Habilitar archivos estáticos (para avatares, fotos, etc.)
+app.UseStaticFiles();   // 🔹 ESTA LÍNEA ES LA CLAVE
 
 // 👉 Activar autenticación y autorización en el orden correcto
 app.UseAuthentication();

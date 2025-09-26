@@ -24,8 +24,7 @@ namespace InmobiliariaApp.Repository
             cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
             cmd.Parameters.AddWithValue("@Apellido", usuario.Apellido);
             cmd.Parameters.AddWithValue("@Rol", usuario.Rol.ToString());
-            cmd.Parameters.AddWithValue("@AvatarUrl", (object?)usuario.AvatarUrl ?? DBNull.Value);
-
+            cmd.Parameters.AddWithValue("@AvatarUrl", usuario.AvatarUrl);
             cmd.ExecuteNonQuery();
         }
 
@@ -84,45 +83,39 @@ namespace InmobiliariaApp.Repository
                     Nombre = reader.GetString("Nombre"),
                     Apellido = reader.GetString("Apellido"),
                     Rol = Enum.Parse<RolUsuario>(reader.GetString("Rol")),
-                    AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
-                        ? "/avatars/default.png"   // ✅ usa default si está en NULL
-                        : reader.GetString(reader.GetOrdinal("AvatarUrl"))
+                    AvatarUrl = reader.GetString("AvatarUrl")
                 };
             }
 
             return null;
         }
 
-
         public List<Usuario> ObtenerTodos()
-{
-    var lista = new List<Usuario>();
-    using var connection = new MySqlConnection(_connectionString);
-    connection.Open();
-
-    var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl FROM Usuarios";
-    using var cmd = new MySqlCommand(sql, connection);
-
-    using var reader = cmd.ExecuteReader();
-    while (reader.Read())
-    {
-        lista.Add(new Usuario
         {
-            Id = reader.GetInt32("Id"),
-            Email = reader.GetString("Email"),
-            PasswordHash = reader.GetString("PasswordHash"),
-            Nombre = reader.GetString("Nombre"),
-            Apellido = reader.GetString("Apellido"),
-            Rol = Enum.Parse<RolUsuario>(reader.GetString("Rol")),
-            AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
-                ? "/avatars/default.png"   // ✅ mismo fix que en ObtenerPorId
-                : reader.GetString(reader.GetOrdinal("AvatarUrl"))
-        });
-    }
+            var lista = new List<Usuario>();
+            using var connection = new MySqlConnection(_connectionString);
+            connection.Open();
 
-    return lista;
-}
+            var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl FROM Usuarios";
+            using var cmd = new MySqlCommand(sql, connection);
 
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                lista.Add(new Usuario
+                {
+                    Id = reader.GetInt32("Id"),
+                    Email = reader.GetString("Email"),
+                    PasswordHash = reader.GetString("PasswordHash"),
+                    Nombre = reader.GetString("Nombre"),
+                    Apellido = reader.GetString("Apellido"),
+                    Rol = Enum.Parse<RolUsuario>(reader.GetString("Rol")),
+                    AvatarUrl = reader.GetString("AvatarUrl")
+                });
+            }
+
+            return lista;
+        }
 
         public void Actualizar(Usuario usuario)
         {
@@ -140,8 +133,7 @@ namespace InmobiliariaApp.Repository
             cmd.Parameters.AddWithValue("@Nombre", usuario.Nombre);
             cmd.Parameters.AddWithValue("@Apellido", usuario.Apellido);
             cmd.Parameters.AddWithValue("@Rol", usuario.Rol.ToString());
-            cmd.Parameters.AddWithValue("@AvatarUrl", (object?)usuario.AvatarUrl ?? DBNull.Value);
-
+            cmd.Parameters.AddWithValue("@AvatarUrl", usuario.AvatarUrl);
             cmd.ExecuteNonQuery();
         }
 
