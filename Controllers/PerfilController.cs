@@ -5,6 +5,8 @@ using InmobiliariaApp.Repository;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using System;
+using System.Linq;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -49,12 +51,43 @@ namespace InmobiliariaApp.Controllers
                 usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(NuevaPassword);
 
             // Manejo de avatar
-            if (eliminarAvatar)
+            var eliminarAvatarValues = Request.HasFormContentType ? Request.Form["eliminarAvatar"] : default;
+            var wantsDefault = eliminarAvatar || eliminarAvatarValues.Any(v =>
+                string.Equals(v, "true", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(v, "on", StringComparison.OrdinalIgnoreCase));
+
+            if (wantsDefault)
             {
-                usuario.AvatarUrl = null; // quedará default al leer
+                var previousAvatar = usuario.AvatarUrl;
+
+                if (!string.IsNullOrWhiteSpace(previousAvatar) &&
+                    !previousAvatar.Equals("/avatars/default.png", StringComparison.OrdinalIgnoreCase))
+                {
+                    var fileName = Path.GetFileName(previousAvatar);
+                    var avatarPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", fileName);
+
+                    if (System.IO.File.Exists(avatarPath))
+                    {
+                        System.IO.File.Delete(avatarPath);
+                    }
+                }
+
+                usuario.AvatarUrl = "/avatars/default.png";
             }
             else if (AvatarFile != null && AvatarFile.Length > 0)
             {
+                var previousAvatar = usuario.AvatarUrl;
+                if (!string.IsNullOrWhiteSpace(previousAvatar) &&
+                    !previousAvatar.Equals("/avatars/default.png", StringComparison.OrdinalIgnoreCase))
+                {
+                    var previousFileName = Path.GetFileName(previousAvatar);
+                    var previousPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", previousFileName);
+                    if (System.IO.File.Exists(previousPath))
+                    {
+                        System.IO.File.Delete(previousPath);
+                    }
+                }
+
                 var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
                 if (!Directory.Exists(uploadsFolder))
                     Directory.CreateDirectory(uploadsFolder);

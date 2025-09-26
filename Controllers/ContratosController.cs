@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
+using InmobiliariaApp.Models.ViewModels;
 using System.Security.Claims;
 
 namespace InmobiliariaApp.Controllers
@@ -11,12 +12,14 @@ namespace InmobiliariaApp.Controllers
         private readonly IRepoContrato repo;
         private readonly RepoPersona repoPersona;
         private readonly RepoInmueble repoInmueble;
+        private readonly IRepoPago repoPago;
 
-        public ContratosController(IRepoContrato repo, RepoPersona repoPersona, RepoInmueble repoInmueble)
+        public ContratosController(IRepoContrato repo, RepoPersona repoPersona, RepoInmueble repoInmueble, IRepoPago repoPago)
         {
             this.repo = repo;
             this.repoPersona = repoPersona;
             this.repoInmueble = repoInmueble;
+            this.repoPago = repoPago;
         }
 
         public IActionResult Index(DateTime? inicio, DateTime? fin)
@@ -74,7 +77,14 @@ namespace InmobiliariaApp.Controllers
         {
             var contrato = repo.ObtenerPorId(id);
             if (contrato == null) return NotFound();
-            return View(contrato);
+
+            var viewModel = new ContratoDetallesViewModel
+            {
+                Contrato = contrato,
+                Pagos = repoPago.ObtenerPorContrato(id)
+            };
+
+            return View(viewModel);
         }
 
         // GET: Contratos/Create

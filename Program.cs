@@ -6,23 +6,35 @@ using Microsoft.Extensions.FileProviders; // 🔹 necesario para PhysicalFilePro
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
-
-// 🔹 Centralizar el string de conexión UNA sola vez
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
-    throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or empty.");
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 builder.Services.AddScoped<IRepoContrato, RepoContrato>();
-builder.Services.AddScoped<IRepoUsuario, RepoUsuario>();
+builder.Services.AddScoped<IRepoPago, RepoPago>();
+builder.Services.AddScoped<IRepoUsuario>(sp =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+        throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or empty.");
+    return new RepoUsuario(connectionString);
+});
 
+builder.Services.AddScoped<RepoUsuario>(sp =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    if (string.IsNullOrEmpty(connectionString))
+        throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or empty.");
+    return new RepoUsuario(connectionString);
+});
 
 // 👉 Configuración de autenticación con cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Auth/Login";         // si no está logueado
-        options.AccessDeniedPath = "/Auth/AccessDenied"; // si no tiene permisos
+        // Si el usuario no está autenticado, lo manda al login
+        options.LoginPath = "/Auth/Login";
+
+        // Si el usuario está autenticado pero no tiene permisos, lo manda acá
+        options.AccessDeniedPath = "/Auth/AccessDenied";
     });
 
 // 👉 Configuración de autorización con políticas
@@ -60,7 +72,7 @@ app.MapControllerRoute(
     pattern: "{controller=Auth}/{action=Login}/{id?}")
     .WithStaticAssets();
 
-// 🔹 Generar hash de prueba (solo debug, podés borrar después)
+// 🔹 Generar hash de prueba (solo para debug, lo sacás después)
 var hash = BCrypt.Net.BCrypt.HashPassword("1234");
 Console.WriteLine("Hash generado para 1234 => " + hash);
 

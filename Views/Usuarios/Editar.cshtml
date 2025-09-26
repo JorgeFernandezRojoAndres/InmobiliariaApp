@@ -45,13 +45,14 @@
     <div class="mb-3">
         <label class="form-label">Avatar (opcional)</label>
         <input type="file" name="AvatarFile" class="form-control" />
-        @* mostramos el avatar actual si existe *@
-        @if (!string.IsNullOrEmpty(Model.AvatarUrl))
-        {
-            <div class="mt-2">
-                <img src="@Model.AvatarUrl" alt="Avatar actual" width="80" class="rounded" />
-            </div>
+        @{
+            var avatarActual = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+                ? "/avatars/default.png"
+                : Model.AvatarUrl;
         }
+        <div class="mt-2">
+            <img src="@avatarActual" alt="Avatar actual" width="80" class="rounded" />
+        </div>
     </div>
 
     <!-- conservamos el campo existente por compatibilidad -->

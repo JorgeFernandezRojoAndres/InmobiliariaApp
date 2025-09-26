@@ -51,6 +51,10 @@ namespace InmobiliariaApp.Controllers
 
                 usuario.AvatarUrl = "/avatars/" + fileName;
             }
+            else if (string.IsNullOrWhiteSpace(usuario.AvatarUrl))
+            {
+                usuario.AvatarUrl = "/avatars/default.png";
+            }
 
             // ✅ Hashear password antes de guardar
             usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.PasswordHash);
@@ -102,7 +106,9 @@ namespace InmobiliariaApp.Controllers
             }
             else
             {
-                usuario.AvatarUrl = usuarioExistente.AvatarUrl;
+                usuario.AvatarUrl = string.IsNullOrWhiteSpace(usuarioExistente.AvatarUrl)
+                    ? "/avatars/default.png"
+                    : usuarioExistente.AvatarUrl;
             }
 
             _repoUsuario.Actualizar(usuario);

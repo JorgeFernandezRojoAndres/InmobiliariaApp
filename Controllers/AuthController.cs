@@ -29,7 +29,7 @@ namespace InmobiliariaApp.Controllers
         // ✅ POST: /Auth/Register
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> Register(UsuarioRegistroViewModel model, IFormFile avatar)
+        public async Task<IActionResult> Register(UsuarioRegistroViewModel model, IFormFile? avatar)
         {
             if (ModelState.IsValid)
             {
@@ -96,7 +96,7 @@ namespace InmobiliariaApp.Controllers
 
                 if (usuario == null || !BCrypt.Net.BCrypt.Verify(model.Password, usuario.PasswordHash))
                 {
-                    
+
                     ModelState.AddModelError("", "Credenciales inválidas");
                     return View(model);
                 }

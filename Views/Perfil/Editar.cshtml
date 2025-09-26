@@ -3,6 +3,12 @@
     ViewData["Title"] = "Mi Perfil";
 }
 
+@{
+    var currentAvatar = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+        ? "/avatars/default.png"
+        : Model.AvatarUrl;
+}
+
 <div class="container mt-4">
     <h2>@ViewData["Title"]</h2>
 
@@ -37,7 +43,7 @@
 
         <div class="mb-3">
             <label class="form-label">Avatar actual</label><br />
-            <img src="@Model.AvatarUrl" alt="Avatar" style="width:100px;height:100px;" class="rounded-circle border" />
+            <img src="@currentAvatar" alt="Avatar" style="width:100px;height:100px;" class="rounded-circle border" />
         </div>
 
         <div class="mb-3">
@@ -46,7 +52,8 @@
         </div>
 
         <div class="form-check mb-3">
-            <input type="checkbox" name="eliminarAvatar" class="form-check-input" id="eliminarAvatar" />
+            <input type="hidden" name="eliminarAvatar" value="false" />
+            <input type="checkbox" name="eliminarAvatar" value="true" class="form-check-input" id="eliminarAvatar" />
             <label class="form-check-label" for="eliminarAvatar">Eliminar avatar y usar el default</label>
         </div>
 
