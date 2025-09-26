@@ -83,7 +83,7 @@ namespace InmobiliariaApp.Controllers
             CargarSelects();
             return View();
         }
-        [HttpPost]
+      [HttpPost]
 [ValidateAntiForgeryToken]
 public IActionResult Create(Contrato contrato)
 {
@@ -91,14 +91,7 @@ public IActionResult Create(Contrato contrato)
     {
         try
         {
-            // 👤 Obtener el ID del usuario logueado desde los Claims
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
-            {
-                int idUsuario = int.Parse(claim.Value);
-                contrato.CreadoPor = idUsuario; // ✅ Guardamos quién lo creó
-            }
-
+            // 👤 ACA tenemos que agregar el id del usuario logueado
             repo.Crear(contrato);
             return RedirectToAction(nameof(Index));
         }
@@ -108,11 +101,9 @@ public IActionResult Create(Contrato contrato)
         }
     }
 
-    // 🔹 Si falla la validación o hay error, recargamos selects
     CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
     return View(contrato);
 }
-
 
 
 
@@ -158,34 +149,34 @@ public IActionResult Create(Contrato contrato)
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
-        {
-            var contrato = repo.ObtenerPorId(id);
-            if (contrato == null) return NotFound();
+{
+    var contrato = repo.ObtenerPorId(id);
+    if (contrato == null) return NotFound();
 
-            // 🔹 Obtener id del usuario logueado con validación
-            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(claimId))
-            {
-                TempData["Error"] = "No se pudo identificar al usuario logueado.";
-                return RedirectToAction(nameof(Index));
-            }
+    // 🔹 Obtener id del usuario logueado con validación
+    var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (string.IsNullOrEmpty(claimId))
+    {
+        TempData["Error"] = "No se pudo identificar al usuario logueado.";
+        return RedirectToAction(nameof(Index));
+    }
 
-            var idUsuario = int.Parse(claimId);
+    var idUsuario = int.Parse(claimId);
 
-            // 🔹 Si ya venció -> marcar como vencido
-            if (contrato.FechaFin <= DateTime.Now)
-            {
-                contrato.Estado = "Vencido";
-                repo.Editar(contrato); // Solo actualizamos estado
-            }
-            else
-            {
-                // 🔹 Si aún está vigente -> marcar como Finalizado con auditoría
-                repo.Eliminar(id, idUsuario);
-            }
+    // 🔹 Si ya venció -> marcar como vencido
+    if (contrato.FechaFin <= DateTime.Now)
+    {
+        contrato.Estado = "Vencido";
+        repo.Editar(contrato); // Solo actualizamos estado
+    }
+    else
+    {
+        // 🔹 Si aún está vigente -> marcar como Finalizado con auditoría
+        repo.Eliminar(id, idUsuario);
+    }
 
-            return RedirectToAction(nameof(Index));
-        }
+    return RedirectToAction(nameof(Index));
+}
 
         [HttpGet]
         public IActionResult VigentesEntreFechas(DateTime? inicio, DateTime? fin)

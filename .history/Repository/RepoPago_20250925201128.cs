@@ -79,12 +79,12 @@ namespace InmobiliariaApp.Repository
                       ' - ', DATE_FORMAT(c.FechaInicio,'%d/%m/%Y'),
                       ' a ', DATE_FORMAT(c.FechaFin,'%d/%m/%Y'),
                       ' ($', c.MontoMensual, ')') AS ContratoDescripcion,
-               p.CreadoPor, u1.Id, u1.Nombre, u1.Apellido,
-               p.AnuladoPor, u2.Id, u2.Nombre, u2.Apellido
+               p.CreadoPorId, u1.Id, u1.Nombre, u1.Apellido,
+               p.AnuladoPorId, u2.Id, u2.Nombre, u2.Apellido
         FROM pagos p
         INNER JOIN contratos c ON p.ContratoId = c.Id
-        LEFT JOIN usuarios u1 ON p.CreadoPor = u1.Id
-        LEFT JOIN usuarios u2 ON p.AnuladoPor = u2.Id
+        LEFT JOIN usuarios u1 ON p.CreadoPorId = u1.Id
+        LEFT JOIN usuarios u2 ON p.AnuladoPorId = u2.Id
         WHERE p.Id=@id";
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@id", id);
@@ -100,15 +100,15 @@ namespace InmobiliariaApp.Repository
             Detalle = reader.IsDBNull(3) ? null : reader.GetString(3),
             Importe = reader.GetDecimal(4),
             ContratoDescripcion = reader.IsDBNull(5) ? null : reader.GetString(5),
-            CreadoPor = reader.GetInt32(6),
-            UsuarioCreador = reader.IsDBNull(7) ? null : new Usuario
+            CreadoPorId = reader.GetInt32(6),
+            CreadoPor = reader.IsDBNull(7) ? null : new Usuario
             {
                 Id = reader.GetInt32(7),
                 Nombre = reader.IsDBNull(8) ? "" : reader.GetString(8),
                 Apellido = reader.IsDBNull(9) ? "" : reader.GetString(9)
             },
-            AnuladoPor = reader.IsDBNull(10) ? null : reader.GetInt32(10),
-            UsuarioAnulador = reader.IsDBNull(11) ? null : new Usuario
+            AnuladoPorId = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+            AnuladoPor = reader.IsDBNull(11) ? null : new Usuario
             {
                 Id = reader.GetInt32(11),
                 Nombre = reader.IsDBNull(12) ? "" : reader.GetString(12),
@@ -118,6 +118,7 @@ namespace InmobiliariaApp.Repository
     }
     return pago;
 }
+
 
         public int Alta(Pago pago)
         {
@@ -151,18 +152,17 @@ namespace InmobiliariaApp.Repository
         }
 
         public int Baja(int id, int anuladoPorId)
-        {
-            using var conn = new MySqlConnection(connectionString);
-            var sql = @"UPDATE pagos 
+{
+    using var conn = new MySqlConnection(connectionString);
+    var sql = @"UPDATE pagos 
                 SET AnuladoPorId=@anuladoPorId 
                 WHERE Id=@id";
-            using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.Parameters.AddWithValue("@anuladoPorId", anuladoPorId);
-            conn.Open();
-            return cmd.ExecuteNonQuery();
-        }
-
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@id", id);
+    cmd.Parameters.AddWithValue("@anuladoPorId", anuladoPorId);
+    conn.Open();
+    return cmd.ExecuteNonQuery();
+}
 
     }
 }

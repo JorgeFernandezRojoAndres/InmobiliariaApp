@@ -105,6 +105,130 @@ namespace InmobiliariaApp.Repository
             }
             return lista;
         }
+        
+        // 🔹 OBTENER SOLO DISPONIBLES
+// 🔹 OBTENER SOLO DISPONIBLES
+public List<Inmueble> ObtenerDisponibles()
+{
+    var lista = new List<Inmueble>();
+    using var connection = new MySqlConnection(_connectionString);
+    const string sql = @"
+        SELECT i.ID, i.Direccion, i.Tipo, i.MetrosCuadrados, i.Precio, 
+               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo
+        FROM Inmuebles i
+        JOIN Personas p ON i.PropietarioID = p.ID
+        WHERE i.Activo = 1
+          AND NOT EXISTS (
+              SELECT 1
+              FROM Contratos c
+              WHERE c.InmuebleID = i.ID
+                AND UPPER(c.Estado) = 'VIGENTE'
+                AND DATE(NOW()) BETWEEN DATE(c.FechaInicio) AND DATE(c.FechaFin)
+          );";
+
+    using var command = new MySqlCommand(sql, connection);
+    connection.Open();
+    using var reader = command.ExecuteReader();
+
+    while (reader.Read())
+    {
+        lista.Add(new Inmueble
+        {
+            Id = reader.GetInt32("ID"),
+            Direccion = reader.GetString("Direccion"),
+            Tipo = reader.GetString("Tipo"),
+            MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+            Precio = reader.GetDecimal("Precio"),
+            PropietarioId = reader.GetInt32("PropietarioID"),
+            NombrePropietario = reader.GetString("NombrePropietario"),
+            Activo = reader.GetBoolean("Activo")
+        });
+    }
+    return lista;
+}
+
+// 🔹 OBTENER DISPONIBLES ENTRE DOS FECHAS
+public List<Inmueble> ObtenerDisponiblesEntre(DateTime inicio, DateTime fin)
+{
+    var lista = new List<Inmueble>();
+    using var connection = new MySqlConnection(_connectionString);
+    const string sql = @"
+        SELECT i.ID, i.Direccion, i.Tipo, i.MetrosCuadrados, i.Precio,
+               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo
+        FROM Inmuebles i
+        JOIN Personas p ON i.PropietarioID = p.ID
+        WHERE i.Activo = 1
+          AND NOT EXISTS (
+              SELECT 1
+              FROM Contratos c
+              WHERE c.InmuebleID = i.ID
+                AND UPPER(c.Estado) = 'VIGENTE'
+                AND (
+                     (@inicio BETWEEN c.FechaInicio AND c.FechaFin)
+                  OR (@fin BETWEEN c.FechaInicio AND c.FechaFin)
+                  OR (c.FechaInicio BETWEEN @inicio AND @fin)
+                )
+          );";
+
+    using var command = new MySqlCommand(sql, connection);
+    command.Parameters.AddWithValue("@inicio", inicio);
+    command.Parameters.AddWithValue("@fin", fin);
+
+    connection.Open();
+    using var reader = command.ExecuteReader();
+
+    while (reader.Read())
+    {
+        lista.Add(new Inmueble
+        {
+            Id = reader.GetInt32("ID"),
+            Direccion = reader.GetString("Direccion"),
+            Tipo = reader.GetString("Tipo"),
+            MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+            Precio = reader.GetDecimal("Precio"),
+            PropietarioId = reader.GetInt32("PropietarioID"),
+            NombrePropietario = reader.GetString("NombrePropietario"),
+            Activo = reader.GetBoolean("Activo")
+        });
+    }
+    return lista;
+}
+
+
+// 🔹 OBTENER POR PROPIETARIO
+        public List<Inmueble> ObtenerPorPropietario(int propietarioId)
+        {
+            var lista = new List<Inmueble>();
+            using var connection = new MySqlConnection(_connectionString);
+            const string sql = @"
+        SELECT i.ID, i.Direccion, i.Tipo, i.MetrosCuadrados, i.Precio,
+               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo
+        FROM Inmuebles i
+        JOIN Personas p ON i.PropietarioID = p.ID
+        WHERE i.PropietarioID = @propId";
+
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@propId", propietarioId);
+
+            connection.Open();
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                lista.Add(new Inmueble
+                {
+                    Id = reader.GetInt32("ID"),
+                    Direccion = reader.GetString("Direccion"),
+                    Tipo = reader.GetString("Tipo"),
+                    MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+                    Precio = reader.GetDecimal("Precio"),
+                    PropietarioId = reader.GetInt32("PropietarioID"),
+                    NombrePropietario = reader.GetString("NombrePropietario"),
+                    Activo = reader.GetBoolean("Activo")
+                });
+            }
+            return lista;
+        }
 
         // 🔹 MODIFICAR
         public void Modificar(Inmueble i)

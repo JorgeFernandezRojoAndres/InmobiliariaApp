@@ -1,6 +1,6 @@
 # File Tree: InmobiliariaApp-main
 
-Generated on: 9/18/2025, 3:29:27 PM
+Generated on: 9/25/2025, 7:45:38 PM
 Root path: `f:\Proyectos\InmobiliariaApp-main\InmobiliariaApp-main`
 
 ```
@@ -118,6 +118,7 @@ Root path: `f:\Proyectos\InmobiliariaApp-main\InmobiliariaApp-main`
 │   │   ├── 🖼️ 31c211f0-4590-4c05-872b-ba9a915d27e6.jpg
 │   │   ├── 🖼️ 38167a4c-05b0-41fe-8ea2-2776ba7885e9.jpg
 │   │   ├── 🖼️ 5c41fc15-d4e2-4b5e-bd96-6ff37397ad79.jpg
+│   │   ├── 🖼️ cc761d25-8f2c-48ab-8ce4-f664cb689195.png
 │   │   ├── 🖼️ ded447e0-bc73-4ad7-9614-bc047302164f.jpg
 │   │   └── 🖼️ e3c1a4c0-c0ee-41da-82f6-9a0cad0aa6ac.jpg
 │   ├── 📁 css/

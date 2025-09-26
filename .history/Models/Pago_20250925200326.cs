@@ -14,10 +14,10 @@ namespace InmobiliariaApp.Models
         public string? ContratoDescripcion { get; set; }
 
         // 🔹 Auditoría
-        public int CreadoPor { get; set; }                 // FK al Usuario que lo creó
-        public Usuario? UsuarioCreador { get; set; }       // Navegación
+        public int CreadoPorId { get; set; }           // FK al Usuario que lo creó
+        public Usuario? CreadoPor { get; set; }        // Navegación
 
-        public int? AnuladoPor { get; set; }               // FK al Usuario que lo anuló
-        public Usuario? UsuarioAnulador { get; set; }      // Navegación
+        public int? AnuladoPorId { get; set; }         // FK al Usuario que lo anuló
+        public Usuario? AnuladoPor { get; set; }
     }
 }

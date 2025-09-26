@@ -24,18 +24,18 @@
             <dl class="row">
                 <dt class="col-sm-3">Creado por</dt>
                 <dd class="col-sm-9">
-                    @(Model.UsuarioCreador != null 
-                        ? $"{Model.UsuarioCreador.Nombre} {Model.UsuarioCreador.Apellido}" 
-                        : $"Usuario ID {Model.CreadoPor}")
+                    @(Model.CreadoPor != null 
+                        ? $"{Model.CreadoPor.Nombre} {Model.CreadoPor.Apellido}" 
+                        : $"Usuario ID {Model.CreadoPorId}")
                 </dd>
 
-                @if (Model.AnuladoPor.HasValue)
+                @if (Model.AnuladoPorId.HasValue)
                 {
                     <dt class="col-sm-3">Anulado por</dt>
                     <dd class="col-sm-9">
-                        @(Model.UsuarioAnulador != null 
-                            ? $"{Model.UsuarioAnulador.Nombre} {Model.UsuarioAnulador.Apellido}" 
-                            : $"Usuario ID {Model.AnuladoPor}")
+                        @(Model.AnuladoPor != null 
+                            ? $"{Model.AnuladoPor.Nombre} {Model.AnuladoPor.Apellido}" 
+                            : $"Usuario ID {Model.AnuladoPorId}")
                     </dd>
                 }
             </dl>

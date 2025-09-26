@@ -4,7 +4,7 @@ namespace InmobiliariaApp.Models
     {
         public int Id { get; set; }
         public string Direccion { get; set; } = string.Empty;
-        public string Tipo { get; set; } = string.Empty; // 👈 nuevo campo
+        public string Tipo { get; set; } = string.Empty; 
         public int MetrosCuadrados { get; set; }
         public decimal Precio { get; set; }
         public int PropietarioId { get; set; }
@@ -12,5 +12,9 @@ namespace InmobiliariaApp.Models
 
         // Prop extra para mostrar nombre del propietario
         public string NombrePropietario { get; set; } = string.Empty;
+
+        // 🔹 Prop calculada para combos/dropdowns
+        public string Descripcion =>
+            $"{Direccion} - {Tipo} (${Precio}) - {NombrePropietario}";
     }
 }

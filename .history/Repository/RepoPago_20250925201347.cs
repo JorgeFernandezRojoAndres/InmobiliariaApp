@@ -70,54 +70,55 @@ namespace InmobiliariaApp.Repository
         }
 
         public Pago? ObtenerPorId(int id)
-{
-    Pago? pago = null;
-    using var conn = new MySqlConnection(connectionString);
-    var sql = @"
+        {
+            Pago? pago = null;
+            using var conn = new MySqlConnection(connectionString);
+            var sql = @"
         SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe,
                CONCAT('Contrato #', c.Id, ' - Inmueble ', c.InmuebleID,
                       ' - ', DATE_FORMAT(c.FechaInicio,'%d/%m/%Y'),
                       ' a ', DATE_FORMAT(c.FechaFin,'%d/%m/%Y'),
                       ' ($', c.MontoMensual, ')') AS ContratoDescripcion,
-               p.CreadoPor, u1.Id, u1.Nombre, u1.Apellido,
-               p.AnuladoPor, u2.Id, u2.Nombre, u2.Apellido
+               p.CreadoPorId, u1.Id, u1.Nombre, u1.Apellido,
+               p.AnuladoPorId, u2.Id, u2.Nombre, u2.Apellido
         FROM pagos p
         INNER JOIN contratos c ON p.ContratoId = c.Id
-        LEFT JOIN usuarios u1 ON p.CreadoPor = u1.Id
-        LEFT JOIN usuarios u2 ON p.AnuladoPor = u2.Id
+        LEFT JOIN usuarios u1 ON p.CreadoPorId = u1.Id
+        LEFT JOIN usuarios u2 ON p.AnuladoPorId = u2.Id
         WHERE p.Id=@id";
-    using var cmd = new MySqlCommand(sql, conn);
-    cmd.Parameters.AddWithValue("@id", id);
-    conn.Open();
-    using var reader = cmd.ExecuteReader();
-    if (reader.Read())
-    {
-        pago = new Pago
-        {
-            Id = reader.GetInt32(0),
-            ContratoId = reader.GetInt32(1),
-            FechaPago = reader.GetDateTime(2),
-            Detalle = reader.IsDBNull(3) ? null : reader.GetString(3),
-            Importe = reader.GetDecimal(4),
-            ContratoDescripcion = reader.IsDBNull(5) ? null : reader.GetString(5),
-            CreadoPor = reader.GetInt32(6),
-            UsuarioCreador = reader.IsDBNull(7) ? null : new Usuario
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@id", id);
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
             {
-                Id = reader.GetInt32(7),
-                Nombre = reader.IsDBNull(8) ? "" : reader.GetString(8),
-                Apellido = reader.IsDBNull(9) ? "" : reader.GetString(9)
-            },
-            AnuladoPor = reader.IsDBNull(10) ? null : reader.GetInt32(10),
-            UsuarioAnulador = reader.IsDBNull(11) ? null : new Usuario
-            {
-                Id = reader.GetInt32(11),
-                Nombre = reader.IsDBNull(12) ? "" : reader.GetString(12),
-                Apellido = reader.IsDBNull(13) ? "" : reader.GetString(13)
+                pago = new Pago
+                {
+                    Id = reader.GetInt32(0),
+                    ContratoId = reader.GetInt32(1),
+                    FechaPago = reader.GetDateTime(2),
+                    Detalle = reader.IsDBNull(3) ? null : reader.GetString(3),
+                    Importe = reader.GetDecimal(4),
+                    ContratoDescripcion = reader.IsDBNull(5) ? null : reader.GetString(5),
+                    CreadoPorId = reader.GetInt32(6),
+                    CreadoPor = reader.IsDBNull(7) ? null : new Usuario
+                    {
+                        Id = reader.GetInt32(7),
+                        Nombre = reader.IsDBNull(8) ? "" : reader.GetString(8),
+                        Apellido = reader.IsDBNull(9) ? "" : reader.GetString(9)
+                    },
+                    AnuladoPorId = reader.IsDBNull(10) ? null : reader.GetInt32(10),
+                    AnuladoPor = reader.IsDBNull(11) ? null : new Usuario
+                    {
+                        Id = reader.GetInt32(11),
+                        Nombre = reader.IsDBNull(12) ? "" : reader.GetString(12),
+                        Apellido = reader.IsDBNull(13) ? "" : reader.GetString(13)
+                    }
+                };
             }
-        };
-    }
-    return pago;
-}
+            return pago;
+        }
+
 
         public int Alta(Pago pago)
         {

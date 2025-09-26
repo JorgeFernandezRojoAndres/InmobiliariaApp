@@ -1,9 +1,11 @@
 @model List<InmobiliariaApp.Models.Inmueble>
 @{
-    ViewData["Title"] = "Gestión de Inmuebles";
+    // 👇 Si el controller no definió nada, mostramos el texto por defecto
+    ViewData["Title"] = ViewData["Title"] ?? "Gestión de Inmuebles";
 }
 
 <h1>@ViewData["Title"]</h1>
+
 
 @if (TempData["Mensaje"] != null)
 {
@@ -11,7 +13,8 @@
 }
 
 <a asp-action="Edicion" asp-route-id="0" class="btn btn-success mb-3">Crear Nuevo Inmueble</a>
-
+<a asp-action="Disponibles" class="btn btn-info mb-3">Ver Disponibles</a>
+<a asp-action="Index" class="btn btn-secondary mb-3">Ver Todos</a>
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -35,8 +38,10 @@
 
                 <td>
                     <a asp-action="Edicion" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
-                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmModal"
-                            data-id="@item.Id" data-direccion="@item.Direccion">
+                    <a asp-controller="Contratos" asp-action="PorInmueble" asp-route-id="@item.Id"
+                        class="btn btn-info btn-sm">📑 Ver Contratos</a>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                        data-bs-target="#confirmModal" data-id="@item.Id" data-direccion="@item.Direccion">
                         Eliminar
                     </button>
                 </td>

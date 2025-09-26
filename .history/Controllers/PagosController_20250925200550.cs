@@ -39,38 +39,37 @@ namespace InmobiliariaApp.Controllers
         }
 
         // POST: /Pagos/Create
-[HttpPost]
-[ValidateAntiForgeryToken]
-public IActionResult Create(Pago pago)
-{
-    if (ModelState.IsValid)
-    {
-        try
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Pago pago)
         {
-            // 👤 Obtener el ID del usuario logueado desde los Claims
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
+            if (ModelState.IsValid)
             {
-                int idUsuario = int.Parse(claim.Value);
-                pago.CreadoPor = idUsuario; // Guardamos quién lo creó (columna CreadoPor en la BD)
+                try
+                {
+                    // 👤 Obtener el ID del usuario logueado desde los Claims
+                    var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+                    if (claim != null)
+                    {
+                        int idUsuario = int.Parse(claim.Value);
+                        pago.CreadoPorId = idUsuario; // Guardamos quién lo creó
+                    }
+
+                    repo.Alta(pago);
+
+                    TempData["SuccessMessage"] = "✅ Pago registrado correctamente.";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"Error al registrar el pago: {ex.Message}");
+                }
             }
 
-            repo.Alta(pago);
-
-            TempData["SuccessMessage"] = "✅ Pago registrado correctamente.";
-            return RedirectToAction(nameof(Index));
+            // 🔹 Si falla la validación o hay error, recargamos contratos
+            ViewBag.Contratos = repoContratos.ObtenerTodos();
+            return View(pago);
         }
-        catch (Exception ex)
-        {
-            ModelState.AddModelError("", $"Error al registrar el pago: {ex.Message}");
-        }
-    }
-
-    // 🔹 Si falla la validación o hay error, recargamos contratos
-    ViewBag.Contratos = repoContratos.ObtenerTodos();
-    return View(pago);
-}
-
 
         // GET: /Pagos/Edit/5
         public IActionResult Edit(int id)
@@ -112,15 +111,21 @@ public IActionResult Create(Pago pago)
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
+            // 🔹 En vez de borrar "físicamente", registramos quién lo anuló
+            var pago = repo.ObtenerPorId(id);
+            if (pago != null)
             {
-                int idUsuario = int.Parse(claim.Value);
-                repo.Baja(id, idUsuario); // ahora registra quién lo anuló
+                var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (claim != null)
+                {
+                    int idUsuario = int.Parse(claim.Value);
+                    pago.AnuladoPorId = idUsuario;
+                }
+
+                repo.Modificacion(pago); // guardamos la anulación
             }
 
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

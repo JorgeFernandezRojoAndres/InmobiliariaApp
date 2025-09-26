@@ -1,7 +1,7 @@
 @model IEnumerable<InmobiliariaApp.Models.Contrato>
 
 @{
-    ViewData["Title"] = "Contratos";
+    ViewData["Title"] = ViewData["Title"] ?? "Contratos";
 }
 
 <h2 class="mb-4">📑 Contratos</h2>
@@ -9,6 +9,33 @@
 <p>
     <a class="btn btn-success" asp-action="Create">➕ Nuevo Contrato</a>
 </p>
+<!-- 🔹 Mostrar errores de validación -->
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@error.ErrorMessage</p>
+        }
+    </div>
+}
+
+<!-- 🔹 Filtro de contratos vigentes entre fechas -->
+<form asp-action="Index" method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label for="inicio" class="form-label">Fecha inicio</label>
+        <input type="date" id="inicio" name="inicio" class="form-control" value="@Context.Request.Query["inicio"]" />
+    </div>
+    <div class="col-md-4">
+        <label for="fin" class="form-label">Fecha fin</label>
+        <input type="date" id="fin" name="fin" class="form-control" value="@Context.Request.Query["fin"]" />
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Filtrar Vigentes</button>
+        <a asp-action="Index" class="btn btn-secondary ms-2">Mostrar Todos</a>
+    </div>
+</form>
+
 
 <table class="table table-striped table-bordered shadow-sm">
     <thead class="table-light">
@@ -27,34 +54,45 @@
         {
             <tr>
                 <td>
-                    @(c.Inquilino != null 
-                        ? $"{c.Inquilino.Nombre} {c.Inquilino.Apellido} - DNI {c.Inquilino.Documento}" 
-                        : "❌ No disponible")
+                    @(c.Inquilino != null
+                                    ? $"{c.Inquilino.Nombre} {c.Inquilino.Apellido} - DNI {c.Inquilino.Documento}"
+                                    : "❌ No disponible")
                 </td>
                 <td>
-                    @(c.Inmueble != null 
-                        ? $"{c.Inmueble.Direccion} - {c.Inmueble.Tipo} (${c.Inmueble.Precio})" 
-                        : "❌ No disponible")
+                    @(c.Inmueble != null
+                                    ? $"{c.Inmueble.Direccion} - {c.Inmueble.Tipo} (${c.Inmueble.Precio})"
+                                    : "❌ No disponible")
                 </td>
                 <td>@c.FechaInicio.ToShortDateString()</td>
                 <td>@c.FechaFin.ToShortDateString()</td>
                 <td>@c.MontoMensual.ToString("C")</td>
                 <td>
-                    @if (c.FechaFin < DateTime.Now)
+                    @switch (c.Estado)
                     {
-                        <span class="badge bg-secondary">Vencido</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-success">
-                            @(!string.IsNullOrEmpty(c.Estado) ? c.Estado : "Sin estado")
-                        </span>
+                        case "Vigente":
+                            <span class="badge bg-success">Vigente</span>
+                            break;
+
+                        case "Finalizado":
+                            <span class="badge bg-warning text-dark">Finalizado</span>
+                            break;
+
+                        case "Vencido":
+                            <span class="badge bg-secondary">Vencido</span>
+                            break;
+
+                        default:
+                            <span class="badge bg-light text-dark">Sin estado</span>
+                            break;
                     }
                 </td>
+
                 <td>
                     <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@c.Id">👁️ Detalles</a>
                     <a class="btn btn-warning btn-sm" asp-action="Edit" asp-route-id="@c.Id">✏️ Editar</a>
                     <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@c.Id">🗑️ Eliminar</a>
+                    <a class="btn btn-success btn-sm" asp-action="Renovar" asp-route-id="@c.Id">🔄 Renovar</a>
+
                 </td>
             </tr>
         }

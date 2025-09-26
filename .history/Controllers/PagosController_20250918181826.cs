@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
-using System.Security.Claims;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -47,14 +46,10 @@ public IActionResult Create(Pago pago)
     {
         try
         {
-            // 👤 Obtener el ID del usuario logueado desde los Claims
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
-            {
-                int idUsuario = int.Parse(claim.Value);
-                pago.CreadoPor = idUsuario; // Guardamos quién lo creó (columna CreadoPor en la BD)
-            }
+            // 👤 Obtener el ID del usuario logueado desde las Claims
+            int idUsuario = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value);
 
+            pago.CreadoPor = idUsuario; // Guardamos quién lo creó
             repo.Alta(pago);
 
             TempData["SuccessMessage"] = "✅ Pago registrado correctamente.";
@@ -112,15 +107,8 @@ public IActionResult Create(Pago pago)
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
-            {
-                int idUsuario = int.Parse(claim.Value);
-                repo.Baja(id, idUsuario); // ahora registra quién lo anuló
-            }
-
+            repo.Baja(id);
             return RedirectToAction(nameof(Index));
         }
-
     }
 }

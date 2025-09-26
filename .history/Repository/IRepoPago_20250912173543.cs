@@ -10,7 +10,6 @@ namespace InmobiliariaApp.Repository
         Pago? ObtenerPorId(int id);
         int Alta(Pago pago);
         int Modificacion(Pago pago);
-        int Baja(int id, int anuladoPorId);
-
+        int Baja(int id);
     }
 }

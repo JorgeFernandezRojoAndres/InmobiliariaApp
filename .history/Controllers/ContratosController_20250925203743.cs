@@ -84,35 +84,26 @@ namespace InmobiliariaApp.Controllers
             return View();
         }
         [HttpPost]
-[ValidateAntiForgeryToken]
-public IActionResult Create(Contrato contrato)
-{
-    if (ModelState.IsValid)
-    {
-        try
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Contrato contrato)
         {
-            // 👤 Obtener el ID del usuario logueado desde los Claims
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
+            if (ModelState.IsValid)
             {
-                int idUsuario = int.Parse(claim.Value);
-                contrato.CreadoPor = idUsuario; // ✅ Guardamos quién lo creó
+                try
+                {
+                    // 👤 ACA tenemos que agregar el id del usuario logueado
+                    repo.Crear(contrato);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySql.Data.MySqlClient.MySqlException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                }
             }
 
-            repo.Crear(contrato);
-            return RedirectToAction(nameof(Index));
+            CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
+            return View(contrato);
         }
-        catch (MySql.Data.MySqlClient.MySqlException ex)
-        {
-            ModelState.AddModelError("", ex.Message);
-        }
-    }
-
-    // 🔹 Si falla la validación o hay error, recargamos selects
-    CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
-    return View(contrato);
-}
-
 
 
 

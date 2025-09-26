@@ -9,15 +9,12 @@ namespace InmobiliariaApp.Models
         public DateTime FechaPago { get; set; }
         public string? Detalle { get; set; }
         public decimal Importe { get; set; }
-
-        // Opcional: para mostrar en las vistas sin Join
         public string? ContratoDescripcion { get; set; }
 
         // 🔹 Auditoría
-        public int CreadoPor { get; set; }                 // FK al Usuario que lo creó
-        public Usuario? UsuarioCreador { get; set; }       // Navegación
-
-        public int? AnuladoPor { get; set; }               // FK al Usuario que lo anuló
-        public Usuario? UsuarioAnulador { get; set; }      // Navegación
+        public int CreadoPor { get; set; }              // Usuario que registró el pago
+        public Usuario? UsuarioCreador { get; set; }   // Navegación opcional
+        public int? AnuladoPor { get; set; }           // Usuario que lo anuló (nullable)
+        public Usuario? UsuarioAnulador { get; set; }
     }
 }
