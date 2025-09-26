@@ -5,7 +5,9 @@ namespace InmobiliariaApp.Repository
 {
     public class RepoPago : IRepoPago
     {
-        private readonly string connectionString = "server=localhost;user=root;password=jorge007;database=mi_base_datos;";
+        public class RepoContrato : IRepoContrato
+{
+    private readonly string connectionString = "server=localhost;user=root;password=jorge007;database=mi_base_datos;";
 
         public List<Pago> ObtenerTodos()
         {
