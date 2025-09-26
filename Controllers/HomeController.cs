@@ -15,43 +15,42 @@ namespace InmobiliariaApp.Controllers
         };
 
         public IActionResult Index()
-{
-    // Leer la cookie
-    string? ultimaPropiedadVistaId = Request.Cookies["ultimaPropiedadVista"];
-if (!string.IsNullOrEmpty(ultimaPropiedadVistaId) && int.TryParse(ultimaPropiedadVistaId, out int idPropiedad))
-{
-    var propiedadFavorita = _propiedades.FirstOrDefault(p => p.Id == idPropiedad);
-    if (propiedadFavorita != null)
-    {
-        ViewBag.MensajeCookie = $"Tu última preferencia es: {propiedadFavorita.Direccion}.";
-    }
-    else
-    {
-        ViewBag.MensajeCookie = "No hemos encontrado la propiedad favorita registrada.";
-    }
-}
-else
-{
-    ViewBag.MensajeCookie = "No hemos registrado tu preferencia de propiedad aún.";
-}
+        {
+            // Leer la cookie
+            string? ultimaPropiedadVistaId = Request.Cookies["ultimaPropiedadVista"];
+            if (!string.IsNullOrEmpty(ultimaPropiedadVistaId) && int.TryParse(ultimaPropiedadVistaId, out int idPropiedad))
+            {
+                var propiedadFavorita = _propiedades.FirstOrDefault(p => p.Id == idPropiedad);
+                if (propiedadFavorita != null)
+                {
+                    ViewBag.MensajeCookie = $"Tu última preferencia es: {propiedadFavorita.Direccion}.";
+                }
+                else
+                {
+                    ViewBag.MensajeCookie = "No hemos encontrado la propiedad favorita registrada.";
+                }
+            }
+            else
+            {
+                ViewBag.MensajeCookie = "No hemos registrado tu preferencia de propiedad aún.";
+            }
 
+            return View(_propiedades);
+        }
 
-    return View(_propiedades);
-}
-    [HttpPost]
-public IActionResult BorrarFavorita()
-{
-    Response.Cookies.Append("ultimaPropiedadVista", "", new CookieOptions
-    {
-        Expires = DateTime.Now.AddDays(-1),
-        HttpOnly = true,
-        IsEssential = true
-    });
+        [HttpPost]
+        public IActionResult BorrarFavorita()
+        {
+            Response.Cookies.Append("ultimaPropiedadVista", "", new CookieOptions
+            {
+                Expires = DateTime.Now.AddDays(-1),
+                HttpOnly = true,
+                IsEssential = true
+            });
 
-    TempData["MensajeBorrado"] = "Se ha eliminado tu preferencia de propiedad.";
-    return RedirectToAction("Index");
-}
-
+            TempData["MensajeBorrado"] = "Se ha eliminado tu preferencia de propiedad.";
+            return RedirectToAction("Index");
+        }
 
         public IActionResult MarcarFavorita(int id)
         {
@@ -63,6 +62,12 @@ public IActionResult BorrarFavorita()
             });
 
             return RedirectToAction("Index");
+        }
+
+        // 🔹 Acción Privacy para evitar error 404 en el menú
+        public IActionResult Privacy()
+        {
+            return View();
         }
     }
 }
