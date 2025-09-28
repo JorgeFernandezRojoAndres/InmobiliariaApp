@@ -4,9 +4,11 @@ using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
 using InmobiliariaApp.Models.ViewModels;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 
 namespace InmobiliariaApp.Controllers
 {
+    [Authorize(Roles = "Administrador,Empleado")]
     public class ContratosController : Controller
     {
         private readonly IRepoContrato repo;
@@ -94,34 +96,34 @@ namespace InmobiliariaApp.Controllers
             return View();
         }
         [HttpPost]
-[ValidateAntiForgeryToken]
-public IActionResult Create(Contrato contrato)
-{
-    if (ModelState.IsValid)
-    {
-        try
+        [ValidateAntiForgeryToken]
+        public IActionResult Create(Contrato contrato)
         {
-            // 👤 Obtener el ID del usuario logueado desde los Claims
-            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (claim != null)
+            if (ModelState.IsValid)
             {
-                int idUsuario = int.Parse(claim.Value);
-                contrato.CreadoPor = idUsuario; // ✅ Guardamos quién lo creó
+                try
+                {
+                    // 👤 Obtener el ID del usuario logueado desde los Claims
+                    var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+                    if (claim != null)
+                    {
+                        int idUsuario = int.Parse(claim.Value);
+                        contrato.CreadoPor = idUsuario; // ✅ Guardamos quién lo creó
+                    }
+
+                    repo.Crear(contrato);
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (MySql.Data.MySqlClient.MySqlException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                }
             }
 
-            repo.Crear(contrato);
-            return RedirectToAction(nameof(Index));
+            // 🔹 Si falla la validación o hay error, recargamos selects
+            CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
+            return View(contrato);
         }
-        catch (MySql.Data.MySqlClient.MySqlException ex)
-        {
-            ModelState.AddModelError("", ex.Message);
-        }
-    }
-
-    // 🔹 Si falla la validación o hay error, recargamos selects
-    CargarSelects(contrato.IdInquilino, contrato.IdInmueble);
-    return View(contrato);
-}
 
 
 
