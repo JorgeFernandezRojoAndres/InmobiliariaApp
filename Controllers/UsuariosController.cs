@@ -8,9 +8,9 @@ namespace InmobiliariaApp.Controllers
     [Authorize(Roles = "Administrador")]
     public class UsuariosController : Controller
     {
-        private readonly RepoUsuario _repoUsuario;
+        private readonly IRepoUsuario _repoUsuario;   // ✅ Usar la interfaz
 
-        public UsuariosController(RepoUsuario repoUsuario)
+        public UsuariosController(IRepoUsuario repoUsuario)  // ✅ Recibir la interfaz
         {
             _repoUsuario = repoUsuario;
         }
