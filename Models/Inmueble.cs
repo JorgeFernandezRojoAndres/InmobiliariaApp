@@ -4,17 +4,23 @@ namespace InmobiliariaApp.Models
     {
         public int Id { get; set; }
         public string Direccion { get; set; } = string.Empty;
-        public string Tipo { get; set; } = string.Empty; 
+
+        // 🔹 FK hacia la tabla tipos_inmuebles
+        public int TipoId { get; set; }
+
+        // 🔹 Nombre del tipo (JOIN con tipos_inmuebles)
+        public string TipoNombre { get; set; } = string.Empty;
+
         public int MetrosCuadrados { get; set; }
         public decimal Precio { get; set; }
         public int PropietarioId { get; set; }
         public bool Activo { get; set; } = true;
 
-        // Prop extra para mostrar nombre del propietario
+        // 🔹 Nombre del propietario (JOIN con propietarios)
         public string NombrePropietario { get; set; } = string.Empty;
 
-        // 🔹 Prop calculada para combos/dropdowns
+        // 🔹 Prop calculada para mostrar en combos/dropdowns
         public string Descripcion =>
-            $"{Direccion} - {Tipo} (${Precio}) - {NombrePropietario}";
+            $"{Direccion} - {TipoNombre} (${Precio}) - {NombrePropietario}";
     }
 }

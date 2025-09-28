@@ -5,12 +5,18 @@ namespace InmobiliariaApp.Repository
 {
     public class RepoTipoInmueble : IRepoTipoInmueble
     {
-        readonly string connectionString = "server=localhost;user=root;password=;database=mi_base_datos;";
+        private readonly string _connectionString;
+
+        // 🔹 Constructor para inyección de dependencias
+        public RepoTipoInmueble(string connectionString)
+        {
+            _connectionString = connectionString;
+        }
 
         public List<TipoInmueble> ObtenerTodos()
         {
             var lista = new List<TipoInmueble>();
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = "SELECT Id, Nombre FROM tipos_inmuebles";
             using var cmd = new MySqlCommand(sql, conn);
             conn.Open();
@@ -29,7 +35,7 @@ namespace InmobiliariaApp.Repository
         public TipoInmueble? ObtenerPorId(int id)
         {
             TipoInmueble? tipo = null;
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = "SELECT Id, Nombre FROM tipos_inmuebles WHERE Id=@id";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@id", id);
@@ -48,7 +54,7 @@ namespace InmobiliariaApp.Repository
 
         public int Alta(TipoInmueble tipo)
         {
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = "INSERT INTO tipos_inmuebles (Nombre) VALUES (@nombre)";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@nombre", tipo.Nombre);
@@ -58,7 +64,7 @@ namespace InmobiliariaApp.Repository
 
         public int Modificacion(TipoInmueble tipo)
         {
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = "UPDATE tipos_inmuebles SET Nombre=@nombre WHERE Id=@id";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@id", tipo.Id);
@@ -69,7 +75,7 @@ namespace InmobiliariaApp.Repository
 
         public int Baja(int id)
         {
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = "DELETE FROM tipos_inmuebles WHERE Id=@id";
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@id", id);

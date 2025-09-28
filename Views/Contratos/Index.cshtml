@@ -60,7 +60,7 @@
                 </td>
                 <td>
                     @(c.Inmueble != null
-                                    ? $"{c.Inmueble.Direccion} - {c.Inmueble.Tipo} (${c.Inmueble.Precio})"
+                                    ? $"{c.Inmueble.Direccion} - {c.Inmueble.TipoNombre} (${c.Inmueble.Precio})"
                                     : "❌ No disponible")
                 </td>
                 <td>@c.FechaInicio.ToShortDateString()</td>

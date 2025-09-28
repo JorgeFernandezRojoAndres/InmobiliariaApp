@@ -23,13 +23,16 @@ namespace InmobiliariaApp.Repository
 
             using (var connection = new MySqlConnection(_connectionString))
             {
-                var sql = @"SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
-                           i.ID as InmuebleID, i.Direccion, i.Tipo, i.Precio,
-                           p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI
-                    FROM contratos c
-                    INNER JOIN inmuebles i ON c.InmuebleID = i.ID
-                    INNER JOIN personas p ON c.InquilinoID = p.ID
-                    WHERE i.ID = @inmuebleId";
+                var sql = @"
+            SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
+                   i.ID as InmuebleID, i.Direccion, i.Precio,
+                   t.Nombre AS TipoNombre,
+                   p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI
+            FROM contratos c
+            INNER JOIN inmuebles i ON c.InmuebleID = i.ID
+            INNER JOIN tipos_inmuebles t ON i.TipoId = t.Id
+            INNER JOIN personas p ON c.InquilinoID = p.ID
+            WHERE i.ID = @inmuebleId";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
@@ -49,7 +52,7 @@ namespace InmobiliariaApp.Repository
                             {
                                 Id = reader.GetInt32("InmuebleID"),
                                 Direccion = reader.GetString("Direccion"),
-                                Tipo = reader.GetString("Tipo"),
+                                TipoNombre = reader.GetString("TipoNombre"), // ✅ ahora correcto
                                 Precio = reader.GetDecimal("Precio")
                             },
                             Inquilino = new Inquilino
@@ -67,217 +70,231 @@ namespace InmobiliariaApp.Repository
             return lista;
         }
 
-        public IList<Contrato> ObtenerTodos()
+        public IList<Contrato> ObtenerTodos() 
+{
+    var lista = new List<Contrato>();
+
+    using (var connection = new MySqlConnection(_connectionString))
+    {
+        var sql = @"
+            SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
+                   c.CreadoPor, c.TerminadoPor,
+                   i.ID AS InmuebleID, i.Direccion, i.Precio,
+                   t.Nombre AS TipoNombre,
+                   p.ID AS InquilinoID, p.Nombre, p.Apellido, p.DNI,
+                   u1.Id AS CreadorId, u1.Nombre AS CreadorNombre, u1.Apellido AS CreadorApellido,
+                   u2.Id AS TerminadorId, u2.Nombre AS TerminadorNombre, u2.Apellido AS TerminadorApellido
+            FROM contratos c
+            INNER JOIN inmuebles i ON c.InmuebleID = i.ID
+            INNER JOIN tipos_inmuebles t ON i.TipoId = t.Id
+            INNER JOIN personas p ON c.InquilinoID = p.ID
+            LEFT JOIN usuarios u1 ON c.CreadoPor = u1.Id
+            LEFT JOIN usuarios u2 ON c.TerminadoPor = u2.Id;
+        ";
+
+        using (var command = new MySqlCommand(sql, connection))
         {
-            var lista = new List<Contrato>();
-
-            using (var connection = new MySqlConnection(_connectionString))
+            connection.Open();
+            var reader = command.ExecuteReader();
+            while (reader.Read())
             {
-                var sql = @"SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
-                           c.CreadoPor, c.TerminadoPor,
-                           i.ID as InmuebleID, i.Direccion, i.Tipo, i.Precio,
-                           p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI,
-                           u1.Id AS CreadorId, u1.Nombre AS CreadorNombre, u1.Apellido AS CreadorApellido,
-                           u2.Id AS TerminadorId, u2.Nombre AS TerminadorNombre, u2.Apellido AS TerminadorApellido
-                    FROM contratos c
-                    INNER JOIN inmuebles i ON c.InmuebleID = i.ID
-                    INNER JOIN personas p ON c.InquilinoID = p.ID
-                    LEFT JOIN usuarios u1 ON c.CreadoPor = u1.Id
-                    LEFT JOIN usuarios u2 ON c.TerminadoPor = u2.Id;";
-
-                using (var command = new MySqlCommand(sql, connection))
+                var contrato = new Contrato
                 {
-                    connection.Open();
-                    var reader = command.ExecuteReader();
-                    while (reader.Read())
+                    Id = reader.GetInt32("Id"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin"),
+                    MontoMensual = reader.GetDecimal("MontoMensual"),
+                    Estado = reader.GetString("Estado"),
+                    IdInquilino = reader.GetInt32("InquilinoID"),
+                    IdInmueble = reader.GetInt32("InmuebleID"),
+
+                    Inmueble = new Inmueble
                     {
-                        var contrato = new Contrato
-                        {
-                            Id = reader.GetInt32("Id"),
-                            FechaInicio = reader.GetDateTime("FechaInicio"),
-                            FechaFin = reader.GetDateTime("FechaFin"),
-                            MontoMensual = reader.GetDecimal("MontoMensual"),
-                            Estado = reader.GetString("Estado"),
-                            IdInquilino = reader.GetInt32("InquilinoID"),
-                            IdInmueble = reader.GetInt32("InmuebleID"),
-
-                            Inmueble = new Inmueble
-                            {
-                                Id = reader.GetInt32("InmuebleID"),
-                                Direccion = reader.GetString("Direccion"),
-                                Tipo = reader.GetString("Tipo"),
-                                Precio = reader.GetDecimal("Precio")
-                            },
-                            Inquilino = new Inquilino
-                            {
-                                Id = reader.GetInt32("InquilinoID"),
-                                Nombre = reader.GetString("Nombre"),
-                                Apellido = reader.GetString("Apellido"),
-                                Documento = reader.GetString("DNI")
-                            },
-                            CreadoPor = reader["CreadoPor"] != DBNull.Value ? Convert.ToInt32(reader["CreadoPor"]) : 0,
-                            TerminadoPor = reader["TerminadoPor"] != DBNull.Value ? Convert.ToInt32(reader["TerminadoPor"]) : (int?)null,
-
-                            UsuarioCreador = reader["CreadorId"] != DBNull.Value
-                                ? new Usuario
-                                {
-                                    Id = Convert.ToInt32(reader["CreadorId"]),
-                                    Nombre = reader["CreadorNombre"].ToString() ?? "",
-                                    Apellido = reader["CreadorApellido"].ToString() ?? ""
-                                }
-                                : null,
-
-                            UsuarioTerminador = reader["TerminadorId"] != DBNull.Value
-                                ? new Usuario
-                                {
-                                    Id = Convert.ToInt32(reader["TerminadorId"]),
-                                    Nombre = reader["TerminadorNombre"].ToString() ?? "",
-                                    Apellido = reader["TerminadorApellido"].ToString() ?? ""
-                                }
-                                : null
-                        };
-
-                        // 🔹 Marcar como vencido si corresponde
-                        if (contrato.FechaFin < DateTime.Now && contrato.Estado == "Vigente")
-                        {
-                            MarcarComoVencido(contrato.Id);
-                            contrato.Estado = "Vencido";
-                        }
-
-                        lista.Add(contrato);
-                    }
-                }
-            }
-
-            return lista;
-        }
-
-        public Contrato? ObtenerPorId(int id)
-        {
-            Contrato? contrato = null;
-
-            using (var connection = new MySqlConnection(_connectionString))
-            {
-                var sql = @"SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
-                           i.ID as InmuebleID, i.Direccion, i.Tipo, i.Precio,
-                           p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI,
-                           c.CreadoPor, c.TerminadoPor,
-                           u1.Id AS CreadorId, u1.Nombre AS CreadorNombre, u1.Apellido AS CreadorApellido,
-                           u2.Id AS TerminadorId, u2.Nombre AS TerminadorNombre, u2.Apellido AS TerminadorApellido
-                    FROM contratos c
-                    INNER JOIN inmuebles i ON c.InmuebleID = i.ID
-                    INNER JOIN personas p ON c.InquilinoID = p.ID
-                    LEFT JOIN usuarios u1 ON c.CreadoPor = u1.Id
-                    LEFT JOIN usuarios u2 ON c.TerminadoPor = u2.Id
-                    WHERE c.Id = @id";
-
-                using (var command = new MySqlCommand(sql, connection))
-                {
-                    command.Parameters.AddWithValue("@id", id);
-                    connection.Open();
-                    var reader = command.ExecuteReader();
-                    if (reader.Read())
+                        Id = reader.GetInt32("InmuebleID"),
+                        Direccion = reader.GetString("Direccion"),
+                        TipoNombre = reader.GetString("TipoNombre"), // ✅ traído desde el JOIN
+                        Precio = reader.GetDecimal("Precio")
+                    },
+                    Inquilino = new Inquilino
                     {
-                        contrato = new Contrato
+                        Id = reader.GetInt32("InquilinoID"),
+                        Nombre = reader.GetString("Nombre"),
+                        Apellido = reader.GetString("Apellido"),
+                        Documento = reader.GetString("DNI")
+                    },
+                    CreadoPor = reader["CreadoPor"] != DBNull.Value ? Convert.ToInt32(reader["CreadoPor"]) : 0,
+                    TerminadoPor = reader["TerminadoPor"] != DBNull.Value ? Convert.ToInt32(reader["TerminadoPor"]) : (int?)null,
+
+                    UsuarioCreador = reader["CreadorId"] != DBNull.Value
+                        ? new Usuario
                         {
-                            Id = reader.GetInt32("Id"),
-                            FechaInicio = reader.GetDateTime("FechaInicio"),
-                            FechaFin = reader.GetDateTime("FechaFin"),
-                            MontoMensual = reader.GetDecimal("MontoMensual"),
-                            Estado = reader.GetString("Estado"),
-                            IdInquilino = reader.GetInt32("InquilinoID"),
-                            IdInmueble = reader.GetInt32("InmuebleID"),
-
-                            Inmueble = new Inmueble
-                            {
-                                Id = reader.GetInt32("InmuebleID"),
-                                Direccion = reader.GetString("Direccion"),
-                                Tipo = reader.GetString("Tipo"),
-                                Precio = reader.GetDecimal("Precio")
-                            },
-                            Inquilino = new Inquilino
-                            {
-                                Id = reader.GetInt32("InquilinoID"),
-                                Nombre = reader.GetString("Nombre"),
-                                Apellido = reader.GetString("Apellido"),
-                                Documento = reader.GetString("DNI")
-                            },
-
-                            CreadoPor = reader["CreadoPor"] != DBNull.Value ? Convert.ToInt32(reader["CreadoPor"]) : 0,
-                            TerminadoPor = reader["TerminadoPor"] != DBNull.Value ? Convert.ToInt32(reader["TerminadoPor"]) : (int?)null,
-
-                            UsuarioCreador = reader["CreadorId"] != DBNull.Value
-                                ? new Usuario
-                                {
-                                    Id = Convert.ToInt32(reader["CreadorId"]),
-                                    Nombre = reader["CreadorNombre"]?.ToString() ?? "",
-                                    Apellido = reader["CreadorApellido"]?.ToString() ?? ""
-                                }
-                                : null,
-
-                            UsuarioTerminador = reader["TerminadorId"] != DBNull.Value
-                                ? new Usuario
-                                {
-                                    Id = Convert.ToInt32(reader["TerminadorId"]),
-                                    Nombre = reader["TerminadorNombre"]?.ToString() ?? "",
-                                    Apellido = reader["TerminadorApellido"]?.ToString() ?? ""
-                                }
-                                : null
-                        };
-
-                        if (contrato.FechaFin < DateTime.Now && contrato.Estado == "Vigente")
-                        {
-                            MarcarComoVencido(contrato.Id);
-                            contrato.Estado = "Vencido";
+                            Id = Convert.ToInt32(reader["CreadorId"]),
+                            Nombre = reader["CreadorNombre"].ToString() ?? "",
+                            Apellido = reader["CreadorApellido"].ToString() ?? ""
                         }
-                    }
-                }
-            }
+                        : null,
 
-            return contrato;
-        }
+                    UsuarioTerminador = reader["TerminadorId"] != DBNull.Value
+                        ? new Usuario
+                        {
+                            Id = Convert.ToInt32(reader["TerminadorId"]),
+                            Nombre = reader["TerminadorNombre"].ToString() ?? "",
+                            Apellido = reader["TerminadorApellido"].ToString() ?? ""
+                        }
+                        : null
+                };
 
-        public int Crear(Contrato contrato)
-        {
-            if (contrato.IdInquilino == 0 || contrato.IdInmueble == 0)
-                throw new ArgumentException("Debe seleccionar un inquilino y un inmueble válidos.");
-
-            using (var connection = new MySqlConnection(_connectionString))
-            {
-                var sql = @"INSERT INTO contratos 
-                    (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor)
-                    VALUES (@inquilino, @inmueble, @inicio, @fin, @monto, @estado, @creadoPor);
-                    SELECT LAST_INSERT_ID();";
-
-                using (var command = new MySqlCommand(sql, connection))
+                // 🔹 Marcar como vencido si corresponde
+                if (contrato.FechaFin < DateTime.Now && contrato.Estado == "Vigente")
                 {
-                    command.Parameters.AddWithValue("@inquilino", contrato.IdInquilino);
-                    command.Parameters.AddWithValue("@inmueble", contrato.IdInmueble);
-                    command.Parameters.AddWithValue("@inicio", contrato.FechaInicio);
-                    command.Parameters.AddWithValue("@fin", contrato.FechaFin);
-                    command.Parameters.AddWithValue("@monto", contrato.MontoMensual);
-                    command.Parameters.AddWithValue("@estado", contrato.Estado);
-                    command.Parameters.AddWithValue("@creadoPor", contrato.CreadoPor);
+                    MarcarComoVencido(contrato.Id);
+                    contrato.Estado = "Vencido";
+                }
 
-                    connection.Open();
-                    var res = Convert.ToInt32(command.ExecuteScalar());
-                    contrato.Id = res;
-                    return res;
+                lista.Add(contrato);
+            }
+        }
+    }
+
+    return lista;
+}
+
+public Contrato? ObtenerPorId(int id)
+{
+    Contrato? contrato = null;
+
+    using (var connection = new MySqlConnection(_connectionString))
+    {
+        var sql = @"
+            SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
+                   i.ID as InmuebleID, i.Direccion, i.Precio,
+                   t.Nombre AS TipoNombre,
+                   p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI,
+                   c.CreadoPor, c.TerminadoPor,
+                   u1.Id AS CreadorId, u1.Nombre AS CreadorNombre, u1.Apellido AS CreadorApellido,
+                   u2.Id AS TerminadorId, u2.Nombre AS TerminadorNombre, u2.Apellido AS TerminadorApellido
+            FROM contratos c
+            INNER JOIN inmuebles i ON c.InmuebleID = i.ID
+            INNER JOIN tipos_inmuebles t ON i.TipoId = t.Id
+            INNER JOIN personas p ON c.InquilinoID = p.ID
+            LEFT JOIN usuarios u1 ON c.CreadoPor = u1.Id
+            LEFT JOIN usuarios u2 ON c.TerminadoPor = u2.Id
+            WHERE c.Id = @id";
+
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@id", id);
+            connection.Open();
+            var reader = command.ExecuteReader();
+            if (reader.Read())
+            {
+                contrato = new Contrato
+                {
+                    Id = reader.GetInt32("Id"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin"),
+                    MontoMensual = reader.GetDecimal("MontoMensual"),
+                    Estado = reader.GetString("Estado"),
+                    IdInquilino = reader.GetInt32("InquilinoID"),
+                    IdInmueble = reader.GetInt32("InmuebleID"),
+
+                    Inmueble = new Inmueble
+                    {
+                        Id = reader.GetInt32("InmuebleID"),
+                        Direccion = reader.GetString("Direccion"),
+                        TipoNombre = reader.GetString("TipoNombre"), // ✅ ahora correcto
+                        Precio = reader.GetDecimal("Precio")
+                    },
+                    Inquilino = new Inquilino
+                    {
+                        Id = reader.GetInt32("InquilinoID"),
+                        Nombre = reader.GetString("Nombre"),
+                        Apellido = reader.GetString("Apellido"),
+                        Documento = reader.GetString("DNI")
+                    },
+
+                    CreadoPor = reader["CreadoPor"] != DBNull.Value ? Convert.ToInt32(reader["CreadoPor"]) : 0,
+                    TerminadoPor = reader["TerminadoPor"] != DBNull.Value ? Convert.ToInt32(reader["TerminadoPor"]) : (int?)null,
+
+                    UsuarioCreador = reader["CreadorId"] != DBNull.Value
+                        ? new Usuario
+                        {
+                            Id = Convert.ToInt32(reader["CreadorId"]),
+                            Nombre = reader["CreadorNombre"]?.ToString() ?? "",
+                            Apellido = reader["CreadorApellido"]?.ToString() ?? ""
+                        }
+                        : null,
+
+                    UsuarioTerminador = reader["TerminadorId"] != DBNull.Value
+                        ? new Usuario
+                        {
+                            Id = Convert.ToInt32(reader["TerminadorId"]),
+                            Nombre = reader["TerminadorNombre"]?.ToString() ?? "",
+                            Apellido = reader["TerminadorApellido"]?.ToString() ?? ""
+                        }
+                        : null
+                };
+
+                // 🔹 Marcar como vencido si corresponde
+                if (contrato.FechaFin < DateTime.Now && contrato.Estado == "Vigente")
+                {
+                    MarcarComoVencido(contrato.Id);
+                    contrato.Estado = "Vencido";
                 }
             }
         }
+    }
 
-        public IList<Contrato> ObtenerVigentesEntre(DateTime inicio, DateTime fin)
+    return contrato;
+}
+
+public int Crear(Contrato contrato)
+{
+    if (contrato.IdInquilino == 0 || contrato.IdInmueble == 0)
+        throw new ArgumentException("Debe seleccionar un inquilino y un inmueble válidos.");
+
+    using (var connection = new MySqlConnection(_connectionString))
+    {
+        var sql = @"
+            INSERT INTO contratos 
+                (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor)
+            VALUES 
+                (@inquilino, @inmueble, @inicio, @fin, @monto, @estado, @creadoPor);
+            SELECT LAST_INSERT_ID();";
+
+        using (var command = new MySqlCommand(sql, connection))
         {
-            var lista = new List<Contrato>();
+            command.Parameters.AddWithValue("@inquilino", contrato.IdInquilino);
+            command.Parameters.AddWithValue("@inmueble", contrato.IdInmueble);
+            command.Parameters.AddWithValue("@inicio", contrato.FechaInicio);
+            command.Parameters.AddWithValue("@fin", contrato.FechaFin);
+            command.Parameters.AddWithValue("@monto", contrato.MontoMensual);
+            command.Parameters.AddWithValue("@estado", contrato.Estado);
+            command.Parameters.AddWithValue("@creadoPor", contrato.CreadoPor);
 
-            using (var connection = new MySqlConnection(_connectionString))
-            {
-                var sql = @"SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
-                   i.ID as InmuebleID, i.Direccion, i.Tipo, i.Precio,
+            connection.Open();
+            var res = Convert.ToInt32(command.ExecuteScalar());
+            contrato.Id = res;
+            return res;
+        }
+    }
+}
+
+
+       public IList<Contrato> ObtenerVigentesEntre(DateTime inicio, DateTime fin)
+{
+    var lista = new List<Contrato>();
+
+    using (var connection = new MySqlConnection(_connectionString))
+    {
+        var sql = @"
+            SELECT c.Id, c.FechaInicio, c.FechaFin, c.MontoMensual, c.Estado,
+                   i.ID as InmuebleID, i.Direccion, i.Precio,
+                   t.Nombre AS TipoNombre,
                    p.ID as InquilinoID, p.Nombre, p.Apellido, p.DNI
             FROM contratos c
             INNER JOIN inmuebles i ON c.InmuebleID = i.ID
+            INNER JOIN tipos_inmuebles t ON i.TipoId = t.Id
             INNER JOIN personas p ON c.InquilinoID = p.ID
             WHERE UPPER(c.Estado) = 'VIGENTE'
               AND (
@@ -286,46 +303,47 @@ namespace InmobiliariaApp.Repository
                 OR (c.FechaInicio BETWEEN @inicio AND @fin)
               );";
 
-                using (var command = new MySqlCommand(sql, connection))
+        using (var command = new MySqlCommand(sql, connection))
+        {
+            command.Parameters.AddWithValue("@inicio", inicio);
+            command.Parameters.AddWithValue("@fin", fin);
+
+            connection.Open();
+            var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                var contrato = new Contrato
                 {
-                    command.Parameters.AddWithValue("@inicio", inicio);
-                    command.Parameters.AddWithValue("@fin", fin);
-
-                    connection.Open();
-                    var reader = command.ExecuteReader();
-
-                    while (reader.Read())
+                    Id = reader.GetInt32("Id"),
+                    FechaInicio = reader.GetDateTime("FechaInicio"),
+                    FechaFin = reader.GetDateTime("FechaFin"),
+                    MontoMensual = reader.GetDecimal("MontoMensual"),
+                    Estado = reader.GetString("Estado"),
+                    Inmueble = new Inmueble
                     {
-                        var contrato = new Contrato
-                        {
-                            Id = reader.GetInt32("Id"),
-                            FechaInicio = reader.GetDateTime("FechaInicio"),
-                            FechaFin = reader.GetDateTime("FechaFin"),
-                            MontoMensual = reader.GetDecimal("MontoMensual"),
-                            Estado = reader.GetString("Estado"),
-                            Inmueble = new Inmueble
-                            {
-                                Id = reader.GetInt32("InmuebleID"),
-                                Direccion = reader.GetString("Direccion"),
-                                Tipo = reader.GetString("Tipo"),
-                                Precio = reader.GetDecimal("Precio")
-                            },
-                            Inquilino = new Inquilino
-                            {
-                                Id = reader.GetInt32("InquilinoID"),
-                                Nombre = reader.GetString("Nombre"),
-                                Apellido = reader.GetString("Apellido"),
-                                Documento = reader.GetString("DNI")
-                            }
-                        };
-
-                        lista.Add(contrato);
+                        Id = reader.GetInt32("InmuebleID"),
+                        Direccion = reader.GetString("Direccion"),
+                        TipoNombre = reader.GetString("TipoNombre"), // ✅ ahora correcto
+                        Precio = reader.GetDecimal("Precio")
+                    },
+                    Inquilino = new Inquilino
+                    {
+                        Id = reader.GetInt32("InquilinoID"),
+                        Nombre = reader.GetString("Nombre"),
+                        Apellido = reader.GetString("Apellido"),
+                        Documento = reader.GetString("DNI")
                     }
-                }
-            }
+                };
 
-            return lista;
+                lista.Add(contrato);
+            }
         }
+    }
+
+    return lista;
+}
+
 
         public int MarcarComoVencido(int id)
         {

@@ -12,9 +12,12 @@
     </div>
 
     <div class="mb-3">
-        <label asp-for="Tipo" class="form-label"></label>
-        <input asp-for="Tipo" class="form-control" />
-        <span asp-validation-for="Tipo" class="text-danger"></span>
+        <label asp-for="TipoId" class="form-label">Tipo de Inmueble</label>
+        <select asp-for="TipoId" class="form-control"
+                asp-items="@(new SelectList(ViewBag.TiposInmuebles, "Id", "Nombre", Model.TipoId))">
+            <option value="">-- Seleccione un Tipo --</option>
+        </select>
+        <span asp-validation-for="TipoId" class="text-danger"></span>
     </div>
 
     <div class="mb-3">
@@ -32,7 +35,7 @@
     <div class="mb-3">
         <label asp-for="PropietarioId" class="form-label"></label>
         <select asp-for="PropietarioId" class="form-control"
-                asp-items="@(new SelectList(ViewBag.Propietarios, "Id", "NombreCompleto"))">
+                asp-items="@(new SelectList(ViewBag.Propietarios, "Id", "NombreCompleto", Model.PropietarioId))">
             <option value="">-- Seleccione un Propietario --</option>
         </select>
         <span asp-validation-for="PropietarioId" class="text-danger"></span>

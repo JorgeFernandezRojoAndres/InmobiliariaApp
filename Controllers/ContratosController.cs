@@ -233,7 +233,7 @@ namespace InmobiliariaApp.Controllers
                 .Select(im => new
                 {
                     Id = im.Id,
-                    Display = $"{im.Direccion} - {im.Tipo} (${im.Precio}) - Propietario: {im.NombrePropietario}"
+                    Display = $"{im.Direccion} - {im.TipoNombre} (${im.Precio}) - Propietario: {im.NombrePropietario}"
                 }).ToList();
 
             ViewBag.Inquilinos = new SelectList(inquilinos, "Id", "Display", inquilinoId);

@@ -6,25 +6,25 @@ namespace InmobiliariaApp.Controllers
 {
     public class TiposInmueblesController : Controller
     {
-        private readonly IRepoTipoInmueble repo;
+        private readonly IRepoTipoInmueble _repo;
 
-        public TiposInmueblesController()
+        // ✅ Ahora el repo se inyecta, no se instancia manualmente
+        public TiposInmueblesController(IRepoTipoInmueble repo)
         {
-            // ⚠️ Ajustá el repo si usás inyección de dependencias
-            repo = new RepoTipoInmueble();
+            _repo = repo;
         }
 
         // GET: /TiposInmuebles
         public IActionResult Index()
         {
-            var lista = repo.ObtenerTodos();
+            var lista = _repo.ObtenerTodos();
             return View(lista);
         }
 
         // GET: /TiposInmuebles/Details/5
         public IActionResult Details(int id)
         {
-            var tipo = repo.ObtenerPorId(id);
+            var tipo = _repo.ObtenerPorId(id);
             if (tipo == null)
             {
                 return NotFound();
@@ -45,7 +45,7 @@ namespace InmobiliariaApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                repo.Alta(tipo);
+                _repo.Alta(tipo);
                 return RedirectToAction(nameof(Index));
             }
             return View(tipo);
@@ -54,7 +54,7 @@ namespace InmobiliariaApp.Controllers
         // GET: /TiposInmuebles/Edit/5
         public IActionResult Edit(int id)
         {
-            var tipo = repo.ObtenerPorId(id);
+            var tipo = _repo.ObtenerPorId(id);
             if (tipo == null)
             {
                 return NotFound();
@@ -74,7 +74,7 @@ namespace InmobiliariaApp.Controllers
 
             if (ModelState.IsValid)
             {
-                repo.Modificacion(tipo);
+                _repo.Modificacion(tipo);
                 return RedirectToAction(nameof(Index));
             }
             return View(tipo);
@@ -83,7 +83,7 @@ namespace InmobiliariaApp.Controllers
         // GET: /TiposInmuebles/Delete/5
         public IActionResult Delete(int id)
         {
-            var tipo = repo.ObtenerPorId(id);
+            var tipo = _repo.ObtenerPorId(id);
             if (tipo == null)
             {
                 return NotFound();
@@ -96,7 +96,7 @@ namespace InmobiliariaApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
-            repo.Baja(id);
+            _repo.Baja(id);
             return RedirectToAction(nameof(Index));
         }
     }
