@@ -1,12 +1,15 @@
+using Microsoft.Extensions.Configuration;
+
 namespace InmobiliariaApp.Repository
 {
-    /// <summary>
-    /// Define el connection string para los repositorios.
-    /// Cambiá usuario/clave/nombre DB según tu entorno.
-    /// </summary>
     public abstract class BaseModel
     {
-        protected string ConnectionString { get; } =
-            "Server=localhost;Port=3306;Database=mi_base_datos;Uid=miusuario;Pwd=mipass;SslMode=None;AllowPublicKeyRetrieval=True;AllowUserVariables=True;";
+        protected readonly string ConnectionString;
+
+        protected BaseModel(IConfiguration configuration)
+        {
+            ConnectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+        }
     }
 }

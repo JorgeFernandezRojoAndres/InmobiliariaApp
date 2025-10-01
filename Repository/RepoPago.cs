@@ -1,16 +1,24 @@
 using MySql.Data.MySqlClient;
 using InmobiliariaApp.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
 {
     public class RepoPago : IRepoPago
     {
-        private readonly string connectionString = "server=localhost;user=root;password=jorge007;database=mi_base_datos;";
+        private readonly string _connectionString;
+
+        // 🔹 Ahora se inyecta IConfiguration para leer del appsettings.json
+        public RepoPago(IConfiguration configuration)
+        {
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+        }
 
         public List<Pago> ObtenerTodos()
         {
             var lista = new List<Pago>();
-            using var conn = new MySqlConnection(connectionString);
+            using var conn = new MySqlConnection(_connectionString);
             var sql = @"
                 SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe,
                        CONCAT('Contrato #', c.Id, ' - Inmueble ', c.InmuebleID,
@@ -36,43 +44,43 @@ namespace InmobiliariaApp.Repository
             }
             return lista;
         }
-
-        public List<Pago> ObtenerPorContrato(int contratoId)
+       public List<Pago> ObtenerPorContrato(int contratoId) 
+{
+    var lista = new List<Pago>();
+    using var conn = new MySqlConnection(_connectionString); // ✅ ahora usa la cadena centralizada
+    var sql = @"
+        SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe,
+               CONCAT('Contrato #', c.Id, ' - Inmueble ', c.InmuebleID,
+                      ' - ', DATE_FORMAT(c.FechaInicio,'%d/%m/%Y'),
+                      ' a ', DATE_FORMAT(c.FechaFin,'%d/%m/%Y'),
+                      ' ($', c.MontoMensual, ')') AS ContratoDescripcion
+        FROM pagos p
+        INNER JOIN contratos c ON p.ContratoId = c.Id
+        WHERE p.ContratoId=@contratoId";
+    
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@contratoId", contratoId);
+    conn.Open();
+    using var reader = cmd.ExecuteReader();
+    while (reader.Read())
+    {
+        lista.Add(new Pago
         {
-            var lista = new List<Pago>();
-            using var conn = new MySqlConnection(connectionString);
-            var sql = @"
-                SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe,
-                       CONCAT('Contrato #', c.Id, ' - Inmueble ', c.InmuebleID,
-                              ' - ', DATE_FORMAT(c.FechaInicio,'%d/%m/%Y'),
-                              ' a ', DATE_FORMAT(c.FechaFin,'%d/%m/%Y'),
-                              ' ($', c.MontoMensual, ')') AS ContratoDescripcion
-                FROM pagos p
-                INNER JOIN contratos c ON p.ContratoId = c.Id
-                WHERE p.ContratoId=@contratoId";
-            using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@contratoId", contratoId);
-            conn.Open();
-            using var reader = cmd.ExecuteReader();
-            while (reader.Read())
-            {
-                lista.Add(new Pago
-                {
-                    Id = reader.GetInt32(0),
-                    ContratoId = reader.GetInt32(1),
-                    FechaPago = reader.GetDateTime(2),
-                    Detalle = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    Importe = reader.GetDecimal(4),
-                    ContratoDescripcion = reader.IsDBNull(5) ? null : reader.GetString(5)
-                });
-            }
-            return lista;
-        }
+            Id = reader.GetInt32(0),
+            ContratoId = reader.GetInt32(1),
+            FechaPago = reader.GetDateTime(2),
+            Detalle = reader.IsDBNull(3) ? null : reader.GetString(3),
+            Importe = reader.GetDecimal(4),
+            ContratoDescripcion = reader.IsDBNull(5) ? null : reader.GetString(5)
+        });
+    }
+    return lista;
+}
 
-        public Pago? ObtenerPorId(int id)
+       public Pago? ObtenerPorId(int id)
 {
     Pago? pago = null;
-    using var conn = new MySqlConnection(connectionString);
+    using var conn = new MySqlConnection(_connectionString); // ✅ centralizado
     var sql = @"
         SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe,
                CONCAT('Contrato #', c.Id, ' - Inmueble ', c.InmuebleID,
@@ -86,6 +94,7 @@ namespace InmobiliariaApp.Repository
         LEFT JOIN usuarios u1 ON p.CreadoPor = u1.Id
         LEFT JOIN usuarios u2 ON p.AnuladoPor = u2.Id
         WHERE p.Id=@id";
+    
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@id", id);
     conn.Open();
@@ -120,48 +129,48 @@ namespace InmobiliariaApp.Repository
 }
 
         public int Alta(Pago pago)
-        {
-            using var conn = new MySqlConnection(connectionString);
-            var sql = @"INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor) 
-            VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor)";
-            using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
-            cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
-            cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@importe", pago.Importe);
-            cmd.Parameters.AddWithValue("@creadoPor", pago.CreadoPor);
+{
+    using var conn = new MySqlConnection(_connectionString); // ✅ ahora usa la conexión centralizada
+    var sql = @"INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor) 
+                VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor)";
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
+    cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
+    cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@importe", pago.Importe);
+    cmd.Parameters.AddWithValue("@creadoPor", pago.CreadoPor);
 
-            conn.Open();
-            return cmd.ExecuteNonQuery();
-        }
+    conn.Open();
+    return cmd.ExecuteNonQuery();
+}
 
         public int Modificacion(Pago pago)
-        {
-            using var conn = new MySqlConnection(connectionString);
-            var sql = @"UPDATE pagos SET ContratoId=@contratoId, FechaPago=@fechaPago, 
-                        Detalle=@detalle, Importe=@importe WHERE Id=@id";
-            using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@id", pago.Id);
-            cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
-            cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
-            cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
-            cmd.Parameters.AddWithValue("@importe", pago.Importe);
-            conn.Open();
-            return cmd.ExecuteNonQuery();
-        }
+{
+    using var conn = new MySqlConnection(_connectionString); // ✅ centralizado
+    var sql = @"UPDATE pagos SET ContratoId=@contratoId, FechaPago=@fechaPago, 
+                Detalle=@detalle, Importe=@importe WHERE Id=@id";
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@id", pago.Id);
+    cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
+    cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
+    cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
+    cmd.Parameters.AddWithValue("@importe", pago.Importe);
+    conn.Open();
+    return cmd.ExecuteNonQuery();
+}
 
-        public int Baja(int id, int anuladoPorId)
-        {
-            using var conn = new MySqlConnection(connectionString);
-            var sql = @"UPDATE pagos 
+public int Baja(int id, int anuladoPorId)
+{
+    using var conn = new MySqlConnection(_connectionString); // ✅ centralizado
+    var sql = @"UPDATE pagos 
                 SET AnuladoPorId=@anuladoPorId 
                 WHERE Id=@id";
-            using var cmd = new MySqlCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.Parameters.AddWithValue("@anuladoPorId", anuladoPorId);
-            conn.Open();
-            return cmd.ExecuteNonQuery();
-        }
+    using var cmd = new MySqlCommand(sql, conn);
+    cmd.Parameters.AddWithValue("@id", id);
+    cmd.Parameters.AddWithValue("@anuladoPorId", anuladoPorId);
+    conn.Open();
+    return cmd.ExecuteNonQuery();
+}
 
 
     }
