@@ -1,0 +1,137 @@
+:root {
+  --nav-bg: linear-gradient(0deg, #FFFFFF 0%, #F4F7FB 100%);
+  --nav-shadow: rgba(133, 189, 215, 0.88);
+  --nav-text: rgb(16, 137, 211);
+  --nav-hover-bg: linear-gradient(45deg, rgb(16, 137, 211), rgb(18, 177, 209));
+  --nav-link: #0099ff;
+  --nav-link-hover: #cff0ff;
+  --nav-border: #12B1D1;
+}
+
+/* Uiverse navbar adaptado a tu paleta */
+.uv-nav {
+  position: relative;
+  width: 620px;       /* ancho fijo */
+  margin: 0 auto;     /* centrado horizontal */
+  height: 60px;
+  border-radius: 40px;
+}
+.uv-shell {
+  display: flex;
+  justify-content: space-around; /* reparte dentro del ancho */
+  align-items: center;
+  padding: 0.5em;
+}
+
+.uv-outline{position:absolute;inset:0;pointer-events:none}
+.uv-rect{stroke-dashoffset:5;stroke-dasharray:0 0 10 40 10 40;transition:.5s;stroke:#12B1D1}
+/* Shell del navbar */
+.uv-shell {
+  position: absolute;
+  inset: 0;
+  background: var(--nav-bg);
+  box-shadow: var(--nav-shadow) 0px 10px 20px -10px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.5em;
+  border-radius: 40px;
+}
+
+/* Botones */
+.uv-btn {
+  padding: .5em 1.25em;
+  
+  cursor: pointer;
+  transition: .1s;
+  text-decoration: none;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.uv-btn:hover {
+  background: var(--nav-hover-bg);
+  
+}
+
+/* Rectángulo animado */
+.uv-rect {
+  stroke: var(--nav-border);
+}
+
+/* Dropdown */
+.uv-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  min-width: 180px;
+  padding: 0.5em 0;
+  box-shadow: var(--nav-shadow) 0px 8px 16px;
+  z-index: 1000;
+}
+
+.uv-subbtn {
+  display: block;
+  padding: 0.5em 1.5em;
+  color: var(--nav-link);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.uv-subbtn:hover {
+  background: var(--nav-link-hover);
+  border-radius: 6px;
+}
+
+
+/* hover global */
+.uv-shell:hover .uv-outline .uv-rect{transition:999999s;stroke-dashoffset:1;stroke-dasharray:0}
+
+/* botones */
+
+.uv-btn:hover{background:linear-gradient(45deg,#1089d3,#12B1D1)}
+
+/* animaciones por índice (4 items) */
+.uv-btn:nth-child(1):hover ~ svg .uv-rect{stroke-dashoffset:0;stroke-dasharray:0 2 8 73.3 8 10.7}
+.uv-btn:nth-child(2):hover ~ svg .uv-rect{stroke-dashoffset:0;stroke-dasharray:0 12.6 9.5 49.3 9.5 31.6}
+.uv-btn:nth-child(3):hover ~ svg .uv-rect{stroke-dashoffset:0;stroke-dasharray:0 24.5 8.5 27.5 8.5 55.5}
+.uv-btn:nth-child(4):hover ~ svg .uv-rect{stroke-dashoffset:0;stroke-dasharray:0 34.7 6.9 10.2 6.9 76}
+
+/* asegurar transición al salir */
+.uv-btn:hover ~ .uv-outline .uv-rect{stroke-dashoffset:0;stroke-dasharray:0 0 10 40 10 40;transition:.5s!important}
+/* Dropdown para el menú Uiverse */
+.uv-dropdown {
+  position: relative;
+}
+
+.uv-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: rgba(16, 16, 16, 0.9);
+  border-radius: 8px;
+  min-width: 180px;
+  padding: 0.5em 0;
+  z-index: 1000;
+}
+
+.uv-dropdown:hover .uv-dropdown-menu {
+  display: block;
+}
+
+.uv-subbtn {
+  display: block;
+  padding: 0.5em 1.5em;
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.uv-subbtn:hover {
+  background: #e4ae0b;
+  border-radius: 6px;
+}
