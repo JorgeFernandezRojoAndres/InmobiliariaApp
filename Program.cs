@@ -10,23 +10,11 @@ builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 builder.Services.AddScoped<IRepoContrato, RepoContrato>();
 builder.Services.AddScoped<IRepoPago, RepoPago>();
+builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>();
+builder.Services.AddScoped<IRepoUsuario, RepoUsuario>();
 
-// 🔹 Registrar el repo de tipos de inmueble
-builder.Services.AddScoped<IRepoTipoInmueble>(sp =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrEmpty(connectionString))
-        throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or empty.");
-    return new RepoTipoInmueble(connectionString); // 👈 tu implementación concreta
-});
 
-builder.Services.AddScoped<IRepoUsuario>(sp =>
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    if (string.IsNullOrEmpty(connectionString))
-        throw new InvalidOperationException("Connection string 'DefaultConnection' is missing or empty.");
-    return new RepoUsuario(connectionString);
-});
+
 
 // 👉 Configuración de autenticación con cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

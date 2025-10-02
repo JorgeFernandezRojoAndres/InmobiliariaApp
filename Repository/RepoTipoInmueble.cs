@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using InmobiliariaApp.Models;
+using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
 {
@@ -7,10 +8,11 @@ namespace InmobiliariaApp.Repository
     {
         private readonly string _connectionString;
 
-        // 🔹 Constructor para inyección de dependencias
-        public RepoTipoInmueble(string connectionString)
+        // ✅ Ahora recibe IConfiguration como los demás repos
+        public RepoTipoInmueble(IConfiguration configuration)
         {
-            _connectionString = connectionString;
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
         }
 
         public List<TipoInmueble> ObtenerTodos()

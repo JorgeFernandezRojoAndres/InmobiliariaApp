@@ -1,5 +1,6 @@
 using InmobiliariaApp.Models;
 using MySql.Data.MySqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
 {
@@ -7,11 +8,12 @@ namespace InmobiliariaApp.Repository
     {
         private readonly string _connectionString;
 
-        public RepoUsuario(string connectionString)
+        // ✅ Ahora también recibe IConfiguration
+        public RepoUsuario(IConfiguration configuration)
         {
-            _connectionString = connectionString;
+            _connectionString = configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
         }
-
         public void Crear(Usuario usuario)
         {
             using var connection = new MySqlConnection(_connectionString);
