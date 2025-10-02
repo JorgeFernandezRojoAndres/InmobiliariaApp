@@ -27,67 +27,67 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <!-- 🔹 Reemplazo InmobiliariaApp por icono + texto -->
-                <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
-                    <i class="bi bi-house-door-fill me-2"></i> <!-- icono casita -->
-                    <span>Inicio</span>
-                </a>
+    <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <div class="container-fluid">
+            <!-- 🔹 Logo con icono + texto -->
+            <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door-fill me-2"></i>
+                <span>Inicio</span>
+            </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
                     aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <div class="collapse navbar-collapse" id="mainNavbar">
-
-                    <!-- Bloque derecho: autenticación -->
-                    <ul class="navbar-nav ms-auto">
-                        @if (User?.Identity?.IsAuthenticated ?? false)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="perfilDropdown"
-                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="@(User.FindFirst("AvatarUrl")?.Value ?? "/avatars/default.png")" alt="Avatar"
-                                        class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;" />
-                                    <span class="d-none d-md-inline">
-                                        @User.FindFirst("FullName")?.Value
-                                    </span>
-                                </a>
-                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
-                                    <li class="dropdown-item-text">
-                                        <small class="text-muted">Rol:
-                                            @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small>
-                                    </li>
-                                    <li><hr class="dropdown-divider" /></li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Perfil" asp-action="Editar">Mi Perfil</a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Login</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">Registrarse</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="perfilDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="@(User.FindFirst("AvatarUrl")?.Value ?? "/avatars/default.png")" alt="Avatar"
+                                     class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;" />
+                                <span class="d-none d-md-inline">
+                                    @User.FindFirst("FullName")?.Value
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
+                                <li class="dropdown-item-text">
+                                    <small class="text-muted">Rol:
+                                        @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Perfil" asp-action="Editar">Mi Perfil</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">Registrarse</a>
+                        </li>
+                    }
+                </ul>
             </div>
-        </nav>
+        </div>
+    </nav>
 
+    <!-- 🔹 Solo mostrar menú extendido si NO estamos en Login ni Register -->
+    @if (ViewData["Title"]?.ToString() != "Login" && ViewData["Title"]?.ToString() != "Registrarse")
+    {
         <div class="d-none d-md-flex justify-content-center my-2">
             <div class="uv-nav">
                 <div class="uv-shell">
-                    
                     <div class="uv-btn uv-dropdown">
                         Inmuebles ▾
                         <div class="uv-dropdown-menu">
@@ -95,7 +95,7 @@
                             <a class="uv-subbtn" asp-controller="Inmuebles" asp-action="DisponiblesEntreFechas">Disponibles por fechas</a>
                         </div>
                     </div>
-                    @if (User.IsInRole("Administrador"))
+                    @if (User?.IsInRole("Administrador") ?? false)
                     {
                         <a class="uv-btn" asp-controller="Pagos" asp-action="Index">Pagos</a>
                         <a class="uv-btn" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
@@ -116,7 +116,9 @@
                 </div>
             </div>
         </div>
-    </header>
+    }
+</header>
+
 
     @if (ViewData["Title"]?.ToString() == "Login" || ViewData["Title"]?.ToString() == "Registrarse")
     {
