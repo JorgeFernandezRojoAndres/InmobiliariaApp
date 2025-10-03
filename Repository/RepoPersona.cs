@@ -21,13 +21,14 @@ namespace InmobiliariaApp.Repository
             var lista = new List<Persona>();
             using var connection = new MySqlConnection(_connectionString);
 
-            // 🔹 Consulta extendida con GROUP_CONCAT para traer roles y avatar
-            const string sql = @"SELECT p.ID, p.Nombre, p.Apellido, p.DNI, p.Email, p.AvatarUrl,
-                            GROUP_CONCAT(r.nombre SEPARATOR ', ') AS Roles
-                     FROM Personas p
-                     LEFT JOIN persona_roles pr ON p.ID = pr.persona_id
-                     LEFT JOIN roles r ON pr.rol_id = r.id
-                     GROUP BY p.ID, p.Nombre, p.Apellido, p.DNI, p.Email, p.AvatarUrl";
+            // 🔹 Consulta extendida con GROUP_CONCAT para traer los roles
+            const string sql = @"SELECT p.ID, p.Nombre, p.Apellido, p.DNI, p.Email,
+                                GROUP_CONCAT(r.nombre SEPARATOR ', ') AS Roles
+                         FROM Personas p
+                         LEFT JOIN persona_roles pr ON p.ID = pr.persona_id
+                         LEFT JOIN roles r ON pr.rol_id = r.id
+                         GROUP BY p.ID, p.Nombre, p.Apellido, p.DNI, p.Email";
+
             using var command = new MySqlCommand(sql, connection);
             connection.Open();
             using var reader = command.ExecuteReader();
@@ -41,9 +42,6 @@ namespace InmobiliariaApp.Repository
                     Apellido = reader.GetString("Apellido"),
                     Documento = reader.GetString("DNI"),
                     Email = reader.GetString("Email"),
-                    AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
-                        ? "default.png"
-                        : reader.GetString("AvatarUrl"),
                     // 🔹 Ahora guardamos los roles en la propiedad Tipo
                     Tipo = reader.IsDBNull(reader.GetOrdinal("Roles"))
                             ? ""
@@ -53,11 +51,12 @@ namespace InmobiliariaApp.Repository
             return lista;
         }
 
+
         // 🔹 Obtener una persona específica
         public Persona? ObtenerPorId(int id)
         {
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email, AvatarUrl FROM Personas WHERE ID=@id";
+            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email FROM Personas WHERE ID=@id";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@id", id);
             connection.Open();
@@ -70,10 +69,7 @@ namespace InmobiliariaApp.Repository
                     Nombre = reader.GetString("Nombre"),
                     Apellido = reader.GetString("Apellido"),
                     Documento = reader.GetString("DNI"),
-                    Email = reader.GetString("Email"),
-                    AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
-                ? "default.png"
-                : reader.GetString("AvatarUrl")
+                    Email = reader.GetString("Email")
                 };
             }
             return null;
@@ -101,16 +97,13 @@ namespace InmobiliariaApp.Repository
             // 2) Si no existe, insertamos la persona
             if (personaId == 0)
             {
-                // Si Avatar no viene, le asignamos uno por defecto
-                var avatar = string.IsNullOrEmpty(p.AvatarUrl) ? "default.png" : p.AvatarUrl;
-                const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email, AvatarUrl) 
-                     VALUES (@nombre, @apellido, @dni, @correo, @avatar)";
+                const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email) 
+                             VALUES (@nombre, @apellido, @dni, @correo)";
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@nombre", p.Nombre);
                 command.Parameters.AddWithValue("@apellido", p.Apellido);
                 command.Parameters.AddWithValue("@dni", p.Documento);
                 command.Parameters.AddWithValue("@correo", p.Email);
-                command.Parameters.AddWithValue("@avatar", avatar);
                 command.ExecuteNonQuery();
                 personaId = (int)command.LastInsertedId;
             }
@@ -148,30 +141,23 @@ namespace InmobiliariaApp.Repository
         }
 
 
+
         // 🔹 Modificar persona
         public void Modificar(Persona p)
         {
             using var connection = new MySqlConnection(_connectionString);
-
-            // Si Avatar no viene, mantenemos el existente o usamos default.png
-            var avatar = string.IsNullOrEmpty(p.AvatarUrl) ? "default.png" : p.AvatarUrl;
-
             const string sql = @"UPDATE Personas SET 
-                        Nombre=@nombre, 
-                        Apellido=@apellido, 
-                        DNI=@dni, 
-                        Email=@correo,
-                        AvatarUrl=@avatar
-                     WHERE ID=@id";
-
+                                    Nombre=@nombre, 
+                                    Apellido=@apellido, 
+                                    DNI=@dni, 
+                                    Email=@correo
+                                 WHERE ID=@id";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@nombre", p.Nombre);
             command.Parameters.AddWithValue("@apellido", p.Apellido);
             command.Parameters.AddWithValue("@dni", p.Documento);
             command.Parameters.AddWithValue("@correo", p.Email);
-            command.Parameters.AddWithValue("@avatar", avatar);
             command.Parameters.AddWithValue("@id", p.Id);
-
             connection.Open();
             command.ExecuteNonQuery();
         }
