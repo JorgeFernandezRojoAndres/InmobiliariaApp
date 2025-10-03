@@ -15,18 +15,18 @@ namespace InmobiliariaApp.Repository
                 ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
         }
 
-        // 🔹 ALTA
+        // 🔹 ALTA 
         public int Alta(Inmueble i)
         {
             using var connection = new MySqlConnection(_connectionString);
             const string sql = @"INSERT INTO Inmuebles 
-                                 (Direccion, Tipo, MetrosCuadrados, Precio, PropietarioID, Activo)
-                                 VALUES (@dir, @tipo, @m2, @precio, @prop, @activo);
-                                 SELECT LAST_INSERT_ID();";
+                         (Direccion, TipoId, MetrosCuadrados, Precio, PropietarioID, Activo)
+                         VALUES (@dir, @tipoId, @m2, @precio, @prop, @activo);
+                         SELECT LAST_INSERT_ID();";
 
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@dir", i.Direccion);
-            command.Parameters.AddWithValue("@tipo", i.TipoNombre);  // 🔹 nuevo
+            command.Parameters.AddWithValue("@tipoId", i.TipoId);  // ✅ ahora usa el FK
             command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
             command.Parameters.AddWithValue("@precio", i.Precio);
             command.Parameters.AddWithValue("@prop", i.PropietarioId);

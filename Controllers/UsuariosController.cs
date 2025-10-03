@@ -29,41 +29,43 @@ namespace InmobiliariaApp.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
 
-        public IActionResult Crear(Usuario usuario, IFormFile AvatarFile)
+        public IActionResult Crear(Usuario usuario, IFormFile? AvatarFile) 
+{
+    if (!ModelState.IsValid) return View(usuario);
+
+    if (AvatarFile != null && AvatarFile.Length > 0)
+    {
+        // ✅ Asegurar que la carpeta exista
+        var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+        if (!Directory.Exists(uploadsFolder))
+            Directory.CreateDirectory(uploadsFolder);
+
+        // ✅ Generar nombre único para el archivo
+        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(AvatarFile.FileName);
+        var filePath = Path.Combine(uploadsFolder, fileName);
+
+        using (var stream = new FileStream(filePath, FileMode.Create))
         {
-            if (!ModelState.IsValid) return View(usuario);
-
-            if (AvatarFile != null && AvatarFile.Length > 0)
-            {
-                // ✅ Asegurar que la carpeta exista
-                var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                // ✅ Generar nombre único para el archivo
-                var fileName = Guid.NewGuid().ToString() + Path.GetExtension(AvatarFile.FileName);
-                var filePath = Path.Combine(uploadsFolder, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    AvatarFile.CopyTo(stream);
-                }
-
-                usuario.AvatarUrl = "/avatars/" + fileName;
-            }
-            else if (string.IsNullOrWhiteSpace(usuario.AvatarUrl))
-            {
-                usuario.AvatarUrl = "/avatars/default.png";
-            }
-
-            // ✅ Hashear password antes de guardar
-            usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.PasswordHash);
-
-            _repoUsuario.Crear(usuario);
-
-            TempData["Success"] = "Usuario creado con éxito.";
-            return RedirectToAction(nameof(Index));
+            AvatarFile.CopyTo(stream);
         }
+
+        usuario.AvatarUrl = "/avatars/" + fileName;
+    }
+    else
+    {
+        // ✅ Siempre asignar default si no se sube avatar
+        usuario.AvatarUrl = "/avatars/default.png";
+    }
+
+    // ✅ Hashear password antes de guardar
+    usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.PasswordHash);
+
+    _repoUsuario.Crear(usuario);
+
+    TempData["Success"] = "Usuario creado con éxito.";
+    return RedirectToAction(nameof(Index));
+}
+
 
         public IActionResult Editar(int id)
         {
