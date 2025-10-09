@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.Cookies; // ✅ agregado para especificar esquema
 using System.Collections.Generic;
 
 namespace InmobiliariaApp.Controllers
 {
-    [Authorize]
+    // 🔒 Este controlador usa autenticación por COOKIES (no JWT)
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
     public class PropietariosController : Controller
     {
         private readonly RepoPersona _repo;

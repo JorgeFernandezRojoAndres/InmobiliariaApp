@@ -204,7 +204,7 @@ namespace InmobiliariaApp.Repository
         }
 
 
-        // 🔹 OBTENER POR PROPIETARIO
+               // 🔹 OBTENER POR PROPIETARIO
         public List<Inmueble> ObtenerPorPropietario(int propietarioId)
         {
             var lista = new List<Inmueble>();
@@ -230,7 +230,7 @@ namespace InmobiliariaApp.Repository
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
-                    TipoNombre = reader.GetString("TipoNombre"), // ✅ corregido
+                    TipoNombre = reader.GetString("TipoNombre"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -240,6 +240,48 @@ namespace InmobiliariaApp.Repository
             }
             return lista;
         }
+
+        // 🔹 OBTENER INMUEBLES ALQUILADOS (VIGENTES) POR PROPIETARIO
+        public List<Inmueble> ObtenerAlquiladosPorPropietario(int propietarioId)
+        {
+            var lista = new List<Inmueble>();
+            using var connection = new MySqlConnection(_connectionString);
+            const string sql = @"
+        SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
+               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
+               t.Nombre AS TipoNombre
+        FROM Inmuebles i
+        JOIN Personas p ON i.PropietarioID = p.ID
+        JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
+        JOIN Contratos c ON c.InmuebleID = i.ID
+        WHERE i.PropietarioID = @propId
+          AND UPPER(c.Estado) = 'VIGENTE'
+          AND CURDATE() BETWEEN DATE(c.FechaInicio) AND DATE(c.FechaFin);";
+
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@propId", propietarioId);
+
+            connection.Open();
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                lista.Add(new Inmueble
+                {
+                    Id = reader.GetInt32("ID"),
+                    Direccion = reader.GetString("Direccion"),
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+                    Precio = reader.GetDecimal("Precio"),
+                    PropietarioId = reader.GetInt32("PropietarioID"),
+                    NombrePropietario = reader.GetString("NombrePropietario"),
+                    Activo = reader.GetBoolean("Activo")
+                });
+            }
+
+            return lista;
+        }
+
 
         // 🔹 MODIFICAR
         public void Modificar(Inmueble i)

@@ -8,5 +8,6 @@ namespace InmobiliariaApp.Models
         public string Documento { get; set; } = string.Empty; // DNI
         public string Email { get; set; } = string.Empty;
         public string Telefono { get; set; } = string.Empty;
+        public string? AvatarUrl { get; set; }
     }
 }
