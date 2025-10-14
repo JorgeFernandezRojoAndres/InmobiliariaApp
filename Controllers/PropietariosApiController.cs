@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 
+
 namespace InmobiliariaApp.Controllers.Api
 {
     [Route("api/Propietarios")]
@@ -249,6 +250,56 @@ namespace InmobiliariaApp.Controllers.Api
                 });
             }
         }
+        // 🔹 CAMBIAR CONTRASEÑA
+[HttpPut("cambiar-clave")]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+public IActionResult CambiarClave([FromBody] CambioClaveDto dto)
+{
+    try
+    {
+        var email = User.Identity?.Name;
+        if (string.IsNullOrEmpty(email))
+            return Unauthorized(new { mensaje = "Token inválido o expirado." });
+
+        var propietario = _repo.ObtenerPorEmail(email);
+        if (propietario == null)
+            return NotFound(new { mensaje = "Propietario no encontrado." });
+
+        // 🔐 Verificar contraseña actual
+        bool claveValida;
+        try
+        {
+            claveValida = BCrypt.Net.BCrypt.Verify(dto.ClaveActual, propietario.Clave);
+        }
+        catch
+        {
+            claveValida = propietario.Clave == dto.ClaveActual;
+        }
+
+        if (!claveValida)
+            return BadRequest(new { mensaje = "La contraseña actual es incorrecta." });
+
+        // 🔄 Generar hash de la nueva clave
+        string nuevaClaveHash = BCrypt.Net.BCrypt.HashPassword(dto.NuevaClave);
+        propietario.Clave = nuevaClaveHash;
+
+        // 💾 Guardar cambios con control de errores
+        try
+        {
+            _repo.Modificar(propietario);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensaje = "Error al guardar la nueva contraseña.", detalle = ex.Message });
+        }
+
+        return Ok(new { mensaje = "Contraseña actualizada correctamente." });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { mensaje = "Error interno al cambiar contraseña.", detalle = ex.Message });
+    }
+}
 
         // 🔹 DTO Login interno
         public class LoginView

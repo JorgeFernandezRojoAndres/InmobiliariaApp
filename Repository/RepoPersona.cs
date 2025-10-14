@@ -142,8 +142,10 @@ public void Modificar(Persona p)
                             DNI=@dni, 
                             Email=@correo,
                             Telefono=@telefono,
-                            AvatarUrl=@avatar
+                            AvatarUrl=@avatar,
+                            Clave=@clave
                          WHERE ID=@id";
+
     using var command = new MySqlCommand(sql, connection);
     command.Parameters.AddWithValue("@nombre", p.Nombre);
     command.Parameters.AddWithValue("@apellido", p.Apellido);
@@ -151,7 +153,9 @@ public void Modificar(Persona p)
     command.Parameters.AddWithValue("@correo", p.Email);
     command.Parameters.AddWithValue("@telefono", p.Telefono ?? (object)DBNull.Value);
     command.Parameters.AddWithValue("@avatar", p.AvatarUrl ?? (object)DBNull.Value);
+    command.Parameters.AddWithValue("@clave", p.Clave ?? (object)DBNull.Value); // ✅ agregado
     command.Parameters.AddWithValue("@id", p.Id);
+
     connection.Open();
     command.ExecuteNonQuery();
 }
