@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
-using InmobiliariaApp.Helpers; // ✅ helper JWT
+using InmobiliariaApp.Helpers;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace InmobiliariaApp.Controllers.Api
 {
-    [Route("api/[controller]")]
+    [Route("api/Propietarios")]
     [ApiController]
     public class PropietariosApiController : ControllerBase
     {
@@ -24,23 +24,23 @@ namespace InmobiliariaApp.Controllers.Api
             _jwtHelper = jwtHelper;
         }
 
-        // 🔹 LOGIN para Propietarios desde la app Android
+        // 🔹 LOGIN
         [HttpPost("login")]
         [AllowAnonymous]
         public IActionResult Login([FromBody] LoginView login)
         {
             try
             {
-                if (login == null || string.IsNullOrWhiteSpace(login.Email) || string.IsNullOrWhiteSpace(login.Clave))
+                if (login == null ||
+                    string.IsNullOrWhiteSpace(login.Email) ||
+                    string.IsNullOrWhiteSpace(login.Clave))
                     return BadRequest(new { mensaje = "Faltan credenciales." });
 
                 var propietario = _repo.ObtenerPorEmail(login.Email);
-
                 if (propietario == null || propietario.Clave != login.Clave)
                     return Unauthorized(new { mensaje = "Credenciales inválidas." });
 
                 var roles = _repo.ObtenerRoles(propietario.Id);
-
                 if (!roles.Contains("Propietario", StringComparer.OrdinalIgnoreCase))
                     return Forbid();
 
@@ -56,6 +56,11 @@ namespace InmobiliariaApp.Controllers.Api
 
                 var token = _jwtHelper.GenerarToken(claims);
 
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var avatarCompleto = string.IsNullOrEmpty(propietario.AvatarUrl)
+                    ? ""
+                    : $"{baseUrl}{propietario.AvatarUrl}";
+
                 return Ok(new
                 {
                     token,
@@ -67,7 +72,7 @@ namespace InmobiliariaApp.Controllers.Api
                         propietario.Apellido,
                         propietario.Email,
                         propietario.Telefono,
-                        propietario.AvatarUrl,
+                        AvatarUrl = avatarCompleto,
                         roles
                     }
                 });
@@ -82,7 +87,7 @@ namespace InmobiliariaApp.Controllers.Api
             }
         }
 
-        // ✅ SUBIR AVATAR (solo accesible con JWT válido)
+        // 🔹 SUBIR AVATAR
         [HttpPost("subirAvatar")]
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> SubirAvatar([FromForm] IFormFile archivo)
@@ -108,10 +113,100 @@ namespace InmobiliariaApp.Controllers.Api
             propietario.AvatarUrl = $"/avatars/{nombreArchivo}";
             _repo.Modificar(propietario);
 
-            return Ok(new { avatarUrl = propietario.AvatarUrl });
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            return Ok(new { avatarUrl = $"{baseUrl}{propietario.AvatarUrl}" });
         }
 
-        // 🔸 DTO dentro de la clase
+        // 🔹 OBTENER PERFIL
+        [HttpGet("perfil")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public IActionResult Perfil()
+        {
+            try
+            {
+                var email = User.Identity?.Name;
+                if (string.IsNullOrEmpty(email))
+                    return Unauthorized(new { mensaje = "Token inválido o expirado." });
+
+                var propietario = _repo.ObtenerPorEmail(email);
+                if (propietario == null)
+                    return NotFound(new { mensaje = "Propietario no encontrado." });
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var avatarCompleto = string.IsNullOrEmpty(propietario.AvatarUrl)
+                    ? ""
+                    : $"{baseUrl}{propietario.AvatarUrl}";
+
+                return Ok(new
+                {
+                    propietario.Id,
+                    propietario.Documento,
+                    propietario.Nombre,
+                    propietario.Apellido,
+                    propietario.Email,
+                    propietario.Telefono,
+                    AvatarUrl = avatarCompleto
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno al obtener perfil.",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // 🔹 ACTUALIZAR PERFIL (PUT)
+        [HttpPut("perfil")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public IActionResult ActualizarPerfil([FromBody] Propietario datos)
+        {
+            try
+            {
+                var email = User.Identity?.Name;
+                if (string.IsNullOrEmpty(email))
+                    return Unauthorized(new { mensaje = "Token inválido o expirado." });
+
+                var propietario = _repo.ObtenerPorEmail(email);
+                if (propietario == null)
+                    return NotFound(new { mensaje = "Propietario no encontrado." });
+
+                // 🔸 Solo se actualizan los campos editables desde la app
+                propietario.Nombre = datos.Nombre ?? propietario.Nombre;
+                propietario.Apellido = datos.Apellido ?? propietario.Apellido;
+                propietario.Telefono = datos.Telefono ?? propietario.Telefono;
+
+                _repo.Modificar(propietario);
+
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var avatarCompleto = string.IsNullOrEmpty(propietario.AvatarUrl)
+                    ? ""
+                    : $"{baseUrl}{propietario.AvatarUrl}";
+
+                return Ok(new
+                {
+                    propietario.Id,
+                    propietario.Documento,
+                    propietario.Nombre,
+                    propietario.Apellido,
+                    propietario.Email,
+                    propietario.Telefono,
+                    AvatarUrl = avatarCompleto
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error interno al actualizar perfil.",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // 🔹 DTO Login interno
         public class LoginView
         {
             public string Email { get; set; } = string.Empty;

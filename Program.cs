@@ -1,4 +1,4 @@
-using InmobiliariaApp.Repository;
+using InmobiliariaApp.Repository; 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -6,13 +6,11 @@ using BCrypt.Net;
 using InmobiliariaApp.Data;
 using InmobiliariaApp.Helpers;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ======================================================
-// 🔹 Servicios principales
-// ======================================================
 builder.Services.AddControllersWithViews();
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
@@ -22,9 +20,42 @@ builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>();
 builder.Services.AddScoped<IRepoUsuario, RepoUsuario>();
 builder.Services.AddScoped<JwtHelper>();
 
-// ======================================================
-// 🔹 AUTENTICACIÓN: Cookies (web) + JWT (API móvil)
-// ======================================================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "Inmobiliaria API",
+        Version = "v1",
+        Description = "Documentación de endpoints para app móvil y panel web"
+    });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Ingrese el token JWT en este formato: Bearer {token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "Smart";
@@ -39,14 +70,13 @@ builder.Services.AddAuthentication(options =>
         ? JwtBearerDefaults.AuthenticationScheme
         : CookieAuthenticationDefaults.AuthenticationScheme;
 })
-// 🔸 JWT Bearer → usado en /api/*
 .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
 {
     var key = builder.Configuration["Jwt:Key"];
     if (string.IsNullOrEmpty(key))
-        throw new InvalidOperationException("❌ Faltan las claves JWT en appsettings.json (Jwt:Key).");
+        throw new InvalidOperationException("Faltan las claves JWT en appsettings.json (Jwt:Key).");
 
-    options.RequireHttpsMetadata = false; // para pruebas locales
+    options.RequireHttpsMetadata = false;
     options.SaveToken = true;
 
     options.TokenValidationParameters = new TokenValidationParameters
@@ -60,7 +90,6 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
     };
 
-    // 🔍 Log de errores JWT en consola
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = ctx =>
@@ -76,21 +105,15 @@ builder.Services.AddAuthentication(options =>
         }
     };
 })
-// 🔸 Cookies → sigue habilitado para el panel MVC
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
 {
     options.LoginPath = "/Auth/Login";
     options.AccessDeniedPath = "/Auth/AccessDenied";
 });
 
-// ======================================================
-// 🔹 Autorización por políticas
-// ======================================================
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
-
-    // Política JWT explícita para las APIs móviles
     options.AddPolicy("ApiJwt", policy =>
         policy.AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
               .RequireAuthenticatedUser());
@@ -98,41 +121,45 @@ builder.Services.AddAuthorization(options =>
 
 var app = builder.Build();
 
-// ======================================================
-// 🔹 Middlewares
-// ======================================================
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Inmobiliaria API v1");
+        c.RoutePrefix = "swagger";
+    });
+}
+
 app.UseRouting();
 
-// 👉 Archivos estáticos
+// ✅ Archivos estáticos para wwwroot
 app.UseStaticFiles();
 
-// 👉 Carpeta avatars
+// ✅ Bloque agregado: servir correctamente los avatares creados en runtime
+var avatarsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
+if (!Directory.Exists(avatarsPath))
+{
+    Directory.CreateDirectory(avatarsPath);
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(
-        Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars")),
+    FileProvider = new PhysicalFileProvider(avatarsPath),
     RequestPath = "/avatars"
 });
 
-// 👉 Autenticación y autorización (orden correcto)
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ======================================================
-// 🔹 Mapear controladores y vistas
-// ======================================================
-app.MapControllers(); // ✅ APIs
+app.MapControllers();
 app.MapStaticAssets();
 
-// 🔹 Ruta por defecto (panel MVC)
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}")
     .WithStaticAssets();
 
-// ======================================================
-// 🔹 Hash de prueba y Seeder
-// ======================================================
 var hash = BCrypt.Net.BCrypt.HashPassword("1234");
 Console.WriteLine("Hash generado para 1234 => " + hash);
 
@@ -142,21 +169,8 @@ using (var scope = app.Services.CreateScope())
     DbSeeder.Seed(repoUsuario);
 }
 
-// ======================================================
-// 🌐 Escuchar en toda la red local
-// ======================================================
+// 🌍 Servidor accesible en red local
 app.Urls.Add("http://0.0.0.0:5027");
 Console.WriteLine("🌍 Servidor accesible en red local: http://0.0.0.0:5027");
-
-// ======================================================
-// 🔹 Swagger opcional
-// ======================================================
-// builder.Services.AddEndpointsApiExplorer();
-// builder.Services.AddSwaggerGen();
-// if (app.Environment.IsDevelopment())
-// {
-//     app.UseSwagger();
-//     app.UseSwaggerUI();
-// }
 
 app.Run();

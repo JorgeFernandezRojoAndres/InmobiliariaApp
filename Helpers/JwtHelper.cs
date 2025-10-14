@@ -33,13 +33,9 @@ namespace InmobiliariaApp.Helpers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // 🔹 Roles (si hay)
             foreach (var rol in roles)
-            {
                 claims.Add(new Claim(ClaimTypes.Role, rol));
-            }
 
-            // 🔹 Clave secreta
             var secretKey = _config["Jwt:Key"];
             if (string.IsNullOrEmpty(secretKey))
                 throw new InvalidOperationException("Falta la clave JWT en appsettings.json.");
@@ -47,18 +43,23 @@ namespace InmobiliariaApp.Helpers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // ✅ Duración extendida según entorno
+            var expiracion = EsEntornoDesarrollo()
+                ? DateTime.UtcNow.AddDays(7)   // 7 días en desarrollo
+                : DateTime.UtcNow.AddHours(3); // 3 horas en producción
+
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(3),
+                expires: expiracion,
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        // ✅ NUEVA SOBRECARGA: ahora el controlador puede pasar directamente los claims personalizados
+        // ✅ NUEVA SOBRECARGA: permite pasar claims personalizados
         public string GenerarToken(IEnumerable<Claim> claims)
         {
             if (claims == null)
@@ -71,15 +72,27 @@ namespace InmobiliariaApp.Helpers
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            var expiracion = EsEntornoDesarrollo()
+                ? DateTime.UtcNow.AddDays(7)
+                : DateTime.UtcNow.AddHours(3);
+
             var token = new JwtSecurityToken(
                 issuer: _config["Jwt:Issuer"],
                 audience: _config["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(3),
+                expires: expiracion,
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        // 🔧 Helper: detecta si estamos en entorno de desarrollo
+        private bool EsEntornoDesarrollo()
+        {
+            var env = _config["ASPNETCORE_ENVIRONMENT"];
+            return !string.IsNullOrEmpty(env) &&
+                   env.Equals("Development", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
