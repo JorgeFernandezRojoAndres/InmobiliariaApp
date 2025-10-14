@@ -37,8 +37,23 @@ namespace InmobiliariaApp.Controllers.Api
                     return BadRequest(new { mensaje = "Faltan credenciales." });
 
                 var propietario = _repo.ObtenerPorEmail(login.Email);
-                if (propietario == null || propietario.Clave != login.Clave)
-                    return Unauthorized(new { mensaje = "Credenciales inválidas." });
+                if (propietario == null)
+                    return Unauthorized(new { mensaje = "Usuario no encontrado." });
+
+                // 🔐 Verificación segura de clave (usa BCrypt si está activo en tu sistema)
+                bool claveValida;
+                try
+                {
+                    claveValida = BCrypt.Net.BCrypt.Verify(login.Clave, propietario.Clave);
+                }
+                catch
+                {
+                    // Si no está encriptada, compara texto plano
+                    claveValida = propietario.Clave == login.Clave;
+                }
+
+                if (!claveValida)
+                    return Unauthorized(new { mensaje = "Contraseña incorrecta." });
 
                 var roles = _repo.ObtenerRoles(propietario.Id);
                 if (!roles.Contains("Propietario", StringComparer.OrdinalIgnoreCase))
@@ -97,7 +112,6 @@ namespace InmobiliariaApp.Controllers.Api
 
             var nombreArchivo = $"{Guid.NewGuid()}{Path.GetExtension(archivo.FileName)}";
             var ruta = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars", nombreArchivo);
-
             Directory.CreateDirectory(Path.GetDirectoryName(ruta)!);
 
             using (var stream = new FileStream(ruta, FileMode.Create))
@@ -173,12 +187,35 @@ namespace InmobiliariaApp.Controllers.Api
                 if (propietario == null)
                     return NotFound(new { mensaje = "Propietario no encontrado." });
 
-                // 🔸 Solo se actualizan los campos editables desde la app
                 propietario.Nombre = datos.Nombre ?? propietario.Nombre;
                 propietario.Apellido = datos.Apellido ?? propietario.Apellido;
                 propietario.Telefono = datos.Telefono ?? propietario.Telefono;
 
+                bool emailCambiado = false;
+                if (!string.IsNullOrEmpty(datos.Email) && datos.Email != propietario.Email)
+                {
+                    propietario.Email = datos.Email;
+                    emailCambiado = true;
+                }
+
                 _repo.Modificar(propietario);
+
+                string? nuevoToken = null;
+                if (emailCambiado)
+                {
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, propietario.Email),
+                        new Claim("IdPropietario", propietario.Id.ToString()),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+                    };
+
+                    var roles = _repo.ObtenerRoles(propietario.Id);
+                    foreach (var rol in roles)
+                        claims.Add(new Claim(ClaimTypes.Role, rol));
+
+                    nuevoToken = _jwtHelper.GenerarToken(claims);
+                }
 
                 var baseUrl = $"{Request.Scheme}://{Request.Host}";
                 var avatarCompleto = string.IsNullOrEmpty(propietario.AvatarUrl)
@@ -187,13 +224,20 @@ namespace InmobiliariaApp.Controllers.Api
 
                 return Ok(new
                 {
-                    propietario.Id,
-                    propietario.Documento,
-                    propietario.Nombre,
-                    propietario.Apellido,
-                    propietario.Email,
-                    propietario.Telefono,
-                    AvatarUrl = avatarCompleto
+                    mensaje = emailCambiado
+                        ? "Perfil actualizado y token regenerado por cambio de email."
+                        : "Perfil actualizado correctamente.",
+                    token = nuevoToken,
+                    propietario = new
+                    {
+                        propietario.Id,
+                        propietario.Documento,
+                        propietario.Nombre,
+                        propietario.Apellido,
+                        propietario.Email,
+                        propietario.Telefono,
+                        AvatarUrl = avatarCompleto
+                    }
                 });
             }
             catch (Exception ex)
