@@ -1,4 +1,4 @@
-using InmobiliariaApp.Repository; 
+using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -11,15 +11,26 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// -------------------------
+// 🧩 Servicios principales
+// -------------------------
 builder.Services.AddControllersWithViews();
+builder.Services.AddControllers(); // ✅ Agregado: asegura que los controladores API se registren correctamente
+
+// -------------------------
+// 🧩 Inyección de dependencias
+// -------------------------
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 builder.Services.AddScoped<IRepoContrato, RepoContrato>();
 builder.Services.AddScoped<IRepoPago, RepoPago>();
-builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>();
+builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>(); // ✅ tu nuevo repo
 builder.Services.AddScoped<IRepoUsuario, RepoUsuario>();
 builder.Services.AddScoped<JwtHelper>();
 
+// -------------------------
+// 🧩 Swagger
+// -------------------------
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -56,6 +67,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
+// -------------------------
+// 🔐 Autenticación
+// -------------------------
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "Smart";
@@ -111,6 +125,9 @@ builder.Services.AddAuthentication(options =>
     options.AccessDeniedPath = "/Auth/AccessDenied";
 });
 
+// -------------------------
+// 🔒 Autorización
+// -------------------------
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("Administrador", policy => policy.RequireRole("Administrador"));
@@ -119,8 +136,14 @@ builder.Services.AddAuthorization(options =>
               .RequireAuthenticatedUser());
 });
 
+// -------------------------
+// 🚀 Construcción del app
+// -------------------------
 var app = builder.Build();
 
+// -------------------------
+// 🧭 Middleware
+// -------------------------
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -132,17 +155,14 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
-
-// ✅ Archivos estáticos para wwwroot
 app.UseStaticFiles();
 
-// ✅ Bloque agregado: servir correctamente los avatares creados en runtime
+// ✅ Archivos estáticos para avatares
 var avatarsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "avatars");
 if (!Directory.Exists(avatarsPath))
 {
     Directory.CreateDirectory(avatarsPath);
 }
-
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(avatarsPath),
@@ -152,14 +172,18 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
-app.MapStaticAssets();
+// ✅ Importante: Mapea los controladores API REST
+app.MapControllers(); // ← Esto asegura que /api/... funcione correctamente
 
+// ✅ Rutas MVC tradicionales
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}")
     .WithStaticAssets();
 
+// -------------------------
+// 🧱 Inicialización y servidor local
+// -------------------------
 var hash = BCrypt.Net.BCrypt.HashPassword("1234");
 Console.WriteLine("Hash generado para 1234 => " + hash);
 

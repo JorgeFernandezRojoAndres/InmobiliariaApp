@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace InmobiliariaApp.Controllers
 {
@@ -8,20 +11,18 @@ namespace InmobiliariaApp.Controllers
     {
         private readonly IRepoTipoInmueble _repo;
 
-        // ✅ Ahora el repo se inyecta, no se instancia manualmente
         public TiposInmueblesController(IRepoTipoInmueble repo)
         {
             _repo = repo;
         }
 
-        // GET: /TiposInmuebles
+        // 🏠 Vistas MVC (sin cambios)
         public IActionResult Index()
         {
             var lista = _repo.ObtenerTodos();
             return View(lista);
         }
 
-        // GET: /TiposInmuebles/Details/5
         public IActionResult Details(int id)
         {
             var tipo = _repo.ObtenerPorId(id);
@@ -32,13 +33,11 @@ namespace InmobiliariaApp.Controllers
             return View(tipo);
         }
 
-        // GET: /TiposInmuebles/Create
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: /TiposInmuebles/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Create(TipoInmueble tipo)
@@ -51,7 +50,6 @@ namespace InmobiliariaApp.Controllers
             return View(tipo);
         }
 
-        // GET: /TiposInmuebles/Edit/5
         public IActionResult Edit(int id)
         {
             var tipo = _repo.ObtenerPorId(id);
@@ -62,7 +60,6 @@ namespace InmobiliariaApp.Controllers
             return View(tipo);
         }
 
-        // POST: /TiposInmuebles/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, TipoInmueble tipo)
@@ -80,7 +77,6 @@ namespace InmobiliariaApp.Controllers
             return View(tipo);
         }
 
-        // GET: /TiposInmuebles/Delete/5
         public IActionResult Delete(int id)
         {
             var tipo = _repo.ObtenerPorId(id);
@@ -91,13 +87,47 @@ namespace InmobiliariaApp.Controllers
             return View(tipo);
         }
 
-        // POST: /TiposInmuebles/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public IActionResult DeleteConfirmed(int id)
         {
             _repo.Baja(id);
             return RedirectToAction(nameof(Index));
+        }
+    }
+
+    // ===============================
+    // ✅ CONTROLADOR API ASÍNCRONO
+    // ===============================
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize] // 🔐 Requiere JWT válido
+    public class TiposInmuebleApiController : ControllerBase
+    {
+        private readonly IRepoTipoInmueble _repo;
+
+        public TiposInmuebleApiController(IRepoTipoInmueble repo)
+        {
+            _repo = repo;
+        }
+
+        // 🔹 GET: api/TiposInmueble
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<TipoInmueble>>> GetTiposAsync()
+        {
+            try
+            {
+                var lista = await _repo.ObtenerTodosAsync();
+
+                if (lista == null || lista.Count == 0)
+                    return NotFound("No hay tipos de inmueble registrados.");
+
+                return Ok(lista);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
         }
     }
 }

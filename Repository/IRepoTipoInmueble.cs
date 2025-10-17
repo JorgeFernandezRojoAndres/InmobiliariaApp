@@ -1,23 +1,27 @@
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using InmobiliariaApp.Models;
 
 namespace InmobiliariaApp.Repository
 {
     public interface IRepoTipoInmueble
     {
-        // 🔹 Traer todos los tipos de inmueble
+        // ===============================
+        // 🔹 Métodos síncronos (compatibles con MVC)
+        // ===============================
         List<TipoInmueble> ObtenerTodos();
-
-        // 🔹 Buscar un tipo por su Id
         TipoInmueble? ObtenerPorId(int id);
-
-        // 🔹 Alta de un nuevo tipo
         int Alta(TipoInmueble tipo);
-
-        // 🔹 Modificación de un tipo existente
         int Modificacion(TipoInmueble tipo);
-
-        // 🔹 Baja lógica o física según lo definas en RepoTipoInmueble
         int Baja(int id);
+
+        // ===============================
+        // 🔹 NUEVOS métodos asíncronos (para API y rendimiento)
+        // ===============================
+        Task<List<TipoInmueble>> ObtenerTodosAsync();
+        Task<TipoInmueble?> ObtenerPorIdAsync(int id);
+        Task<int> AltaAsync(TipoInmueble tipo);
+        Task<int> ModificacionAsync(TipoInmueble tipo);
+        Task<int> BajaAsync(int id);
     }
 }
