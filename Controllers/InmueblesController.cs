@@ -85,7 +85,6 @@ namespace InmobiliariaApp.Controllers
             }
 
             var inmueble = _repoInmueble.Obtener(id);
-
             if (inmueble == null)
             {
                 return RedirectToAction("Index");
@@ -97,16 +96,48 @@ namespace InmobiliariaApp.Controllers
         [HttpPost]
         public IActionResult Guardar(Inmueble inmueble)
         {
-            if (inmueble.Id == 0)
+            // ✅ Si el modelo no es válido, se recargan las listas
+            if (!ModelState.IsValid)
             {
-                _repoInmueble.Alta(inmueble);
-            }
-            else
-            {
-                _repoInmueble.Modificar(inmueble);
+                ViewBag.Propietarios = _repoPersona.ObtenerTodos()
+                    .Select(p => new
+                    {
+                        Id = p.Id,
+                        NombreCompleto = $"{p.Nombre} {p.Apellido} - DNI {p.Documento}"
+                    }).ToList();
+
+                ViewBag.TiposInmuebles = _repoTipoInmueble.ObtenerTodos();
+                return View("Edicion", inmueble);
             }
 
-            return RedirectToAction("Index");
+            try
+            {
+                if (inmueble.Id == 0)
+                {
+                    _repoInmueble.Alta(inmueble);
+                }
+                else
+                {
+                    _repoInmueble.Modificacion(inmueble);
+                }
+
+                TempData["Mensaje"] = "✅ Inmueble guardado correctamente.";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                // ⚠️ Captura errores y vuelve a mostrar el formulario con las listas cargadas
+                ModelState.AddModelError("", $"Error al guardar el inmueble: {ex.Message}");
+                ViewBag.Propietarios = _repoPersona.ObtenerTodos()
+                    .Select(p => new
+                    {
+                        Id = p.Id,
+                        NombreCompleto = $"{p.Nombre} {p.Apellido} - DNI {p.Documento}"
+                    }).ToList();
+
+                ViewBag.TiposInmuebles = _repoTipoInmueble.ObtenerTodos();
+                return View("Edicion", inmueble);
+            }
         }
 
         [HttpPost]

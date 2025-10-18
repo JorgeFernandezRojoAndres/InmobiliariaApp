@@ -15,6 +15,8 @@ namespace InmobiliariaApp.Models
         public decimal Precio { get; set; }
         public int PropietarioId { get; set; }
         public bool Activo { get; set; } = true;
+        // 🖼️ URL o ruta de imagen del inmueble (nullable)
+        public string? ImagenUrl { get; set; }
 
         // 🔹 Nombre del propietario (JOIN con propietarios)
         public string NombrePropietario { get; set; } = string.Empty;

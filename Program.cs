@@ -8,6 +8,7 @@ using InmobiliariaApp.Helpers;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using System.IO;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 🧩 Servicios principales
 // -------------------------
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers(); // ✅ Agregado: asegura que los controladores API se registren correctamente
+builder.Services.AddControllers(); // ✅ asegura que los controladores API se registren correctamente
 
 // -------------------------
 // 🧩 Inyección de dependencias
@@ -24,7 +25,7 @@ builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 builder.Services.AddScoped<IRepoContrato, RepoContrato>();
 builder.Services.AddScoped<IRepoPago, RepoPago>();
-builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>(); // ✅ tu nuevo repo
+builder.Services.AddScoped<IRepoTipoInmueble, RepoTipoInmueble>();
 builder.Services.AddScoped<IRepoUsuario, RepoUsuario>();
 builder.Services.AddScoped<JwtHelper>();
 
@@ -155,6 +156,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseRouting();
+
+// ✅ Archivos estáticos principales (wwwroot)
 app.UseStaticFiles();
 
 // ✅ Archivos estáticos para avatares
@@ -169,11 +172,23 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/avatars"
 });
 
+// ✅ NUEVO: Archivos estáticos para /uploads
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+if (!Directory.Exists(uploadsPath))
+{
+    Directory.CreateDirectory(uploadsPath);
+}
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsPath),
+    RequestPath = "/uploads"
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-// ✅ Importante: Mapea los controladores API REST
-app.MapControllers(); // ← Esto asegura que /api/... funcione correctamente
+// ✅ Mapea controladores API REST
+app.MapControllers();
 
 // ✅ Rutas MVC tradicionales
 app.MapControllerRoute(
