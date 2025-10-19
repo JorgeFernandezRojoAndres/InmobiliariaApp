@@ -245,5 +245,38 @@ public IActionResult ObtenerMisInmuebles()
                 return StatusCode(500, new { mensaje = "Error al subir la imagen.", detalle = ex.Message });
             }
         }
+        // 🔹 POST: /api/Inmuebles
+// POST: /api/Inmuebles
+[HttpPost]
+public IActionResult CrearInmueble([FromBody] Inmueble inmueble)
+{
+    try
+    {
+        var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
+        if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
+            return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
+
+        if (inmueble == null)
+            return BadRequest(new { mensaje = "El cuerpo del request está vacío o es inválido." });
+
+        inmueble.PropietarioId = idPropietario;
+        inmueble.Activo = true;
+
+        int idGenerado = _repoInmueble.Alta(inmueble);
+        if (idGenerado > 0)
+        {
+            inmueble.Id = idGenerado;
+            return Ok(inmueble); // devuelve el creado con ID
+        }
+
+        return StatusCode(500, new { mensaje = "Error al guardar el inmueble." });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { mensaje = "Error al crear el inmueble.", detalle = ex.Message });
+    }
+}
+
+
     }
 }
