@@ -2,6 +2,7 @@ using MySqlConnector;
 using InmobiliariaApp.Models;
 using Microsoft.Extensions.Configuration;
 
+
 namespace InmobiliariaApp.Repository
 {
     public class RepoInmueble
@@ -267,6 +268,56 @@ namespace InmobiliariaApp.Repository
 
             return lista;
         }
+    public List<Inmueble> ObtenerPorPropietarioYActivo(int propietarioId, bool activo)
+{
+    var lista = new List<Inmueble>();
+    using var connection = new MySqlConnection(_connectionString);
+
+    const string sql = @"
+        SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
+               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
+               t.Nombre AS TipoNombre,
+               i.ImagenUrl
+        FROM Inmuebles i
+        JOIN Personas p ON i.PropietarioID = p.ID
+        JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
+        WHERE i.PropietarioID = @propId AND i.Activo = @activo";
+
+    using var command = new MySqlCommand(sql, connection);
+    command.Parameters.AddWithValue("@propId", propietarioId);
+    command.Parameters.AddWithValue("@activo", activo);
+
+    connection.Open();
+    using var reader = command.ExecuteReader();
+
+    while (reader.Read())
+    {
+        string? rawUrl = reader["ImagenUrl"] == DBNull.Value ? null : reader.GetString("ImagenUrl");
+
+        if (!string.IsNullOrEmpty(rawUrl))
+        {
+            rawUrl = rawUrl
+                .Replace("/uploads/uploads/", "/uploads/")
+                .Replace("//uploads/", "/uploads/");
+        }
+
+        lista.Add(new Inmueble
+        {
+            Id = reader.GetInt32("ID"),
+            Direccion = reader.GetString("Direccion"),
+            TipoNombre = reader.GetString("TipoNombre"),
+            MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+            Precio = reader.GetDecimal("Precio"),
+            PropietarioId = reader.GetInt32("PropietarioID"),
+            NombrePropietario = reader.GetString("NombrePropietario"),
+            Activo = reader.GetBoolean("Activo"),
+            ImagenUrl = rawUrl
+        });
+    }
+
+    return lista;
+}
+
 
 
         // 🔹 OBTENER INMUEBLES ALQUILADOS (VIGENTES) POR PROPIETARIO

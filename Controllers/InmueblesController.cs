@@ -44,6 +44,56 @@ namespace InmobiliariaApp.Controllers
             ViewData["Title"] = "Inmuebles del Propietario";
             return View("Index", lista);
         }
+        [HttpGet]
+        public IActionResult ActivosPorPropietario([FromQuery(Name = "propietarioid")] int propietarioId)
+        {
+            try
+            {
+                var propietario = _repoPersona.ObtenerTodos()
+                    .FirstOrDefault(p => p.Id == propietarioId);
+
+                var lista = _repoInmueble.ObtenerPorPropietarioYActivo(propietarioId, true);
+
+                string nombreProp = propietario != null
+                    ? $"{propietario.Nombre} {propietario.Apellido}"
+                    : $"ID {propietarioId}";
+
+                ViewData["Title"] = $"Inmuebles activos de {nombreProp}";
+                ViewBag.PropietarioId = propietarioId; // 🔹 Para que la vista recuerde el filtro actual
+                return View("Index", lista);
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = $"⚠️ Error al filtrar activos: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+
+        [HttpGet]
+        public IActionResult InactivosPorPropietario([FromQuery(Name = "propietarioid")] int propietarioId)
+        {
+            try
+            {
+                var propietario = _repoPersona.ObtenerTodos()
+                    .FirstOrDefault(p => p.Id == propietarioId);
+
+                var lista = _repoInmueble.ObtenerPorPropietarioYActivo(propietarioId, false);
+
+                string nombreProp = propietario != null
+                    ? $"{propietario.Nombre} {propietario.Apellido}"
+                    : $"ID {propietarioId}";
+
+                ViewData["Title"] = $"Inmuebles inactivos de {nombreProp}";
+                ViewBag.PropietarioId = propietarioId; // 🔹 Mantiene el ID en la vista para reusar en botones o filtros
+                return View("Index", lista);
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = $"⚠️ Error al filtrar inactivos: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
         // 🔹 Listado de inmuebles disponibles entre dos fechas
         [HttpGet]
@@ -93,30 +143,30 @@ namespace InmobiliariaApp.Controllers
             return View(inmueble);
         }
         [HttpGet]
-public IActionResult BuscarPorPropietario(int propietarioId)
-{
-    try
-    {
-        // 🧠 Buscar propietario para mostrar su nombre
-        var propietario = _repoPersona.ObtenerTodos()
-            .FirstOrDefault(p => p.Id == propietarioId);
+        public IActionResult BuscarPorPropietario(int propietarioId)
+        {
+            try
+            {
+                // 🧠 Buscar propietario para mostrar su nombre
+                var propietario = _repoPersona.ObtenerTodos()
+                    .FirstOrDefault(p => p.Id == propietarioId);
 
-        var lista = _repoInmueble.ObtenerPorPropietario(propietarioId);
+                var lista = _repoInmueble.ObtenerPorPropietario(propietarioId);
 
-        // 🔹 Construir título dinámico con nombre si existe
-        string nombreProp = propietario != null
-            ? $"{propietario.Nombre} {propietario.Apellido}"
-            : $"ID {propietarioId}";
+                // 🔹 Construir título dinámico con nombre si existe
+                string nombreProp = propietario != null
+                    ? $"{propietario.Nombre} {propietario.Apellido}"
+                    : $"ID {propietarioId}";
 
-        ViewData["Title"] = $"Inmuebles de {nombreProp}";
-        return View("Index", lista);
-    }
-    catch (Exception ex)
-    {
-        TempData["Mensaje"] = $"⚠️ Error al buscar inmuebles: {ex.Message}";
-        return RedirectToAction(nameof(Index));
-    }
-}
+                ViewData["Title"] = $"Inmuebles de {nombreProp}";
+                return View("Index", lista);
+            }
+            catch (Exception ex)
+            {
+                TempData["Mensaje"] = $"⚠️ Error al buscar inmuebles: {ex.Message}";
+                return RedirectToAction(nameof(Index));
+            }
+        }
 
         [HttpPost]
         public IActionResult Guardar(Inmueble inmueble)

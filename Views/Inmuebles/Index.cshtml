@@ -1,4 +1,4 @@
-@model List<InmobiliariaApp.Models.Inmueble>
+@model List<InmobiliariaApp.Models.Inmueble> 
 @{
     ViewData["Title"] = ViewData["Title"] ?? "Gestión de Inmuebles";
 }
@@ -14,12 +14,22 @@
 <a asp-action="Disponibles" class="btn btn-info mb-3">Ver Disponibles</a>
 <a asp-action="Index" class="btn btn-secondary mb-3">Ver Todos</a>
 
-<!-- 🔍 Nuevo formulario de búsqueda -->
+<!-- 🔍 Formulario de búsqueda -->
 <form asp-action="BuscarPorPropietario" method="get" class="d-flex align-items-center mb-3">
     <input type="number" name="propietarioId" class="form-control me-2" placeholder="ID de propietario" required />
     <button type="submit" class="btn btn-primary">🔍 Buscar por usuario</button>
     <a asp-action="Index" class="btn btn-outline-secondary ms-2">Restablecer</a>
 </form>
+
+<!-- 🧩 Botones de filtro activo/inactivo cuando hay propietario -->
+@if (Context.Request.Query.ContainsKey("propietarioId"))
+{
+    var propietarioId = Context.Request.Query["propietarioId"];
+    <div class="mb-3">
+        <a asp-action="ActivosPorPropietario" asp-route-propietarioId="@propietarioId" class="btn btn-success me-2">Ver Activos</a>
+        <a asp-action="InactivosPorPropietario" asp-route-propietarioId="@propietarioId" class="btn btn-secondary">Ver Inactivos</a>
+    </div>
+}
 
 <table class="table table-bordered">
     <thead>
