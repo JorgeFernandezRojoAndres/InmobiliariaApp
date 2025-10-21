@@ -92,6 +92,31 @@ namespace InmobiliariaApp.Controllers
 
             return View(inmueble);
         }
+        [HttpGet]
+public IActionResult BuscarPorPropietario(int propietarioId)
+{
+    try
+    {
+        // 🧠 Buscar propietario para mostrar su nombre
+        var propietario = _repoPersona.ObtenerTodos()
+            .FirstOrDefault(p => p.Id == propietarioId);
+
+        var lista = _repoInmueble.ObtenerPorPropietario(propietarioId);
+
+        // 🔹 Construir título dinámico con nombre si existe
+        string nombreProp = propietario != null
+            ? $"{propietario.Nombre} {propietario.Apellido}"
+            : $"ID {propietarioId}";
+
+        ViewData["Title"] = $"Inmuebles de {nombreProp}";
+        return View("Index", lista);
+    }
+    catch (Exception ex)
+    {
+        TempData["Mensaje"] = $"⚠️ Error al buscar inmuebles: {ex.Message}";
+        return RedirectToAction(nameof(Index));
+    }
+}
 
         [HttpPost]
         public IActionResult Guardar(Inmueble inmueble)

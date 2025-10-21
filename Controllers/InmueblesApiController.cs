@@ -47,50 +47,50 @@ namespace InmobiliariaApp.Controllers.Api
             }
         }
         // 🔹 GET: /api/Inmuebles/misInmuebles
-[HttpGet("misInmuebles")]
-public IActionResult ObtenerMisInmuebles()
-{
-    try
-    {
-        var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
-        if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
-            return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
-
-        var inmuebles = _repoInmueble.ObtenerPorPropietario(idPropietario);
-
-        // ✅ Si hay inmuebles, agregar la URL completa de la imagen
-        if (inmuebles != null)
+        [HttpGet("misInmuebles")]
+        public IActionResult ObtenerMisInmuebles()
         {
-            foreach (var i in inmuebles)
+            try
             {
-                if (!string.IsNullOrEmpty(i.ImagenUrl))
-                {
-                    // 🧩 Limpia rutas duplicadas
-                    i.ImagenUrl = i.ImagenUrl
-                        .Replace("/uploads/uploads/", "/uploads/")
-                        .Replace("//uploads/", "/uploads/");
+                var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
+                if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
+                    return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
 
-                    // 🌐 Si la ruta es relativa, la completamos con el dominio actual
-                    if (!i.ImagenUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                var inmuebles = _repoInmueble.ObtenerPorPropietario(idPropietario);
+
+                // ✅ Si hay inmuebles, agregar la URL completa de la imagen
+                if (inmuebles != null)
+                {
+                    foreach (var i in inmuebles)
                     {
-                        var path = i.ImagenUrl.TrimStart('/');
-                        i.ImagenUrl = $"{Request.Scheme}://{Request.Host}/{path}";
+                        if (!string.IsNullOrEmpty(i.ImagenUrl))
+                        {
+                            // 🧩 Limpia rutas duplicadas
+                            i.ImagenUrl = i.ImagenUrl
+                                .Replace("/uploads/uploads/", "/uploads/")
+                                .Replace("//uploads/", "/uploads/");
+
+                            // 🌐 Si la ruta es relativa, la completamos con el dominio actual
+                            if (!i.ImagenUrl.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var path = i.ImagenUrl.TrimStart('/');
+                                i.ImagenUrl = $"{Request.Scheme}://{Request.Host}/{path}";
+                            }
+                        }
                     }
                 }
+
+                return Ok(inmuebles ?? new List<Inmueble>());
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al obtener los inmuebles del propietario.",
+                    detalle = ex.Message
+                });
             }
         }
-
-        return Ok(inmuebles ?? new List<Inmueble>());
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new
-        {
-            mensaje = "Error al obtener los inmuebles del propietario.",
-            detalle = ex.Message
-        });
-    }
-}
 
 
         // 🔹 PUT JSON: /api/Inmuebles/{id}
@@ -245,37 +245,70 @@ public IActionResult ObtenerMisInmuebles()
                 return StatusCode(500, new { mensaje = "Error al subir la imagen.", detalle = ex.Message });
             }
         }
-        // 🔹 POST: /api/Inmuebles
-// POST: /api/Inmuebles
-[HttpPost]
-public IActionResult CrearInmueble([FromBody] Inmueble inmueble)
-{
-    try
-    {
-        var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
-        if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
-            return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
-
-        if (inmueble == null)
-            return BadRequest(new { mensaje = "El cuerpo del request está vacío o es inválido." });
-
-        inmueble.PropietarioId = idPropietario;
-        inmueble.Activo = true;
-
-        int idGenerado = _repoInmueble.Alta(inmueble);
-        if (idGenerado > 0)
+        // 🔹 PUT: /api/Inmuebles/{id}/disponibilidad
+        [HttpPut("{id}/disponibilidad")]
+        public IActionResult ActualizarDisponibilidad(int id, [FromBody] Inmueble inmueble)
         {
-            inmueble.Id = idGenerado;
-            return Ok(inmueble); // devuelve el creado con ID
+            try
+            {
+                var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
+                if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
+                    return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
+
+                // ✅ Ejecutar actualización directa del campo Activo
+                int filas = _repoInmueble.ActualizarEstado(id, inmueble.Activo);
+
+                if (filas > 0)
+                {
+                    Console.WriteLine($"[DEBUG Controller] ✅ Disponibilidad actualizada (Id={id}, Activo={inmueble.Activo})");
+                    return Ok(new { mensaje = "Disponibilidad actualizada correctamente." });
+                }
+                else
+                {
+                    return NotFound(new { mensaje = "No se encontró el inmueble para actualizar." });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR Controller] {ex.Message}");
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al actualizar la disponibilidad del inmueble.",
+                    detalle = ex.Message
+                });
+            }
         }
 
-        return StatusCode(500, new { mensaje = "Error al guardar el inmueble." });
-    }
-    catch (Exception ex)
-    {
-        return StatusCode(500, new { mensaje = "Error al crear el inmueble.", detalle = ex.Message });
-    }
-}
+        // POST: /api/Inmuebles
+        [HttpPost]
+        public IActionResult CrearInmueble([FromBody] Inmueble inmueble)
+        {
+            try
+            {
+                var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
+                if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
+                    return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
+
+                if (inmueble == null)
+                    return BadRequest(new { mensaje = "El cuerpo del request está vacío o es inválido." });
+
+                inmueble.PropietarioId = idPropietario;
+                inmueble.Activo = true;
+
+                int idGenerado = _repoInmueble.Alta(inmueble);
+                if (idGenerado > 0)
+                {
+                    inmueble.Id = idGenerado;
+                    return Ok(inmueble); // devuelve el creado con ID
+                }
+
+                return StatusCode(500, new { mensaje = "Error al guardar el inmueble." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { mensaje = "Error al crear el inmueble.", detalle = ex.Message });
+            }
+        }
 
 
     }

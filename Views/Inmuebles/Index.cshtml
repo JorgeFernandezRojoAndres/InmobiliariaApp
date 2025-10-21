@@ -1,11 +1,9 @@
 @model List<InmobiliariaApp.Models.Inmueble>
 @{
-    // 👇 Si el controller no definió nada, mostramos el texto por defecto
     ViewData["Title"] = ViewData["Title"] ?? "Gestión de Inmuebles";
 }
 
 <h1>@ViewData["Title"]</h1>
-
 
 @if (TempData["Mensaje"] != null)
 {
@@ -15,6 +13,14 @@
 <a asp-action="Edicion" asp-route-id="0" class="btn btn-success mb-3">Crear Nuevo Inmueble</a>
 <a asp-action="Disponibles" class="btn btn-info mb-3">Ver Disponibles</a>
 <a asp-action="Index" class="btn btn-secondary mb-3">Ver Todos</a>
+
+<!-- 🔍 Nuevo formulario de búsqueda -->
+<form asp-action="BuscarPorPropietario" method="get" class="d-flex align-items-center mb-3">
+    <input type="number" name="propietarioId" class="form-control me-2" placeholder="ID de propietario" required />
+    <button type="submit" class="btn btn-primary">🔍 Buscar por usuario</button>
+    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Restablecer</a>
+</form>
+
 <table class="table table-bordered">
     <thead>
         <tr>
@@ -35,13 +41,12 @@
                 <td>@item.TipoNombre</td>
                 <td>@item.Precio.ToString("C")</td>
                 <td>@item.NombrePropietario</td>
-
                 <td>
                     <a asp-action="Edicion" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
                     <a asp-controller="Contratos" asp-action="PorInmueble" asp-route-id="@item.Id"
-                        class="btn btn-info btn-sm">📑 Ver Contratos</a>
+                       class="btn btn-info btn-sm">📑 Ver Contratos</a>
                     <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                        data-bs-target="#confirmModal" data-id="@item.Id" data-direccion="@item.Direccion">
+                            data-bs-target="#confirmModal" data-id="@item.Id" data-direccion="@item.Direccion">
                         Eliminar
                     </button>
                 </td>
@@ -79,7 +84,6 @@
             var button = event.relatedTarget;
             var id = button.getAttribute('data-id');
             var direccion = button.getAttribute('data-direccion');
-
             document.getElementById('inmuebleId').value = id;
             document.getElementById('inmuebleDireccion').textContent = direccion;
         });

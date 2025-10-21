@@ -202,6 +202,21 @@ namespace InmobiliariaApp.Repository
             }
             return lista;
         }
+        // 🔹 NUEVO: ACTUALIZAR SOLO EL ESTADO (para disponibilidad desde la app)
+        public int ActualizarEstado(int id, bool activo)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            const string sql = "UPDATE Inmuebles SET Activo = @activo WHERE ID = @id";
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@activo", activo);
+            command.Parameters.AddWithValue("@id", id);
+
+            connection.Open();
+            int filas = command.ExecuteNonQuery();
+
+            Console.WriteLine($"[DEBUG RepoInmueble] Actualizado Activo={activo} para ID={id}, filas afectadas={filas}");
+            return filas;
+        }
 
         // 🔹 OBTENER POR PROPIETARIO  
         public List<Inmueble> ObtenerPorPropietario(int propietarioId)
@@ -210,14 +225,14 @@ namespace InmobiliariaApp.Repository
             using var connection = new MySqlConnection(_connectionString);
 
             const string sql = @"
-        SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
-               p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
-               t.Nombre AS TipoNombre,
-               i.ImagenUrl
-        FROM Inmuebles i
-        JOIN Personas p ON i.PropietarioID = p.ID
-        JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
-        WHERE i.PropietarioID = @propId";
+    SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
+           p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
+           t.Nombre AS TipoNombre,
+           i.ImagenUrl
+    FROM Inmuebles i
+    JOIN Personas p ON i.PropietarioID = p.ID
+    JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
+    WHERE i.PropietarioID = @propId"; // ✅ mostrar activos e inactivos
 
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@propId", propietarioId);
@@ -229,18 +244,14 @@ namespace InmobiliariaApp.Repository
             {
                 string? rawUrl = reader["ImagenUrl"] == DBNull.Value ? null : reader.GetString("ImagenUrl");
 
-                // 🧩 Corrección robusta: limpia doble /uploads/ y URLs mal formadas
                 if (!string.IsNullOrEmpty(rawUrl))
                 {
-                    // 🔸 Si trae la URL completa, limpia dentro de ella también
                     rawUrl = rawUrl
-                        .Replace("http://", "http://") // seguridad por si algún replace global
-                        .Replace("https://", "https://") // igual
-                        .Replace("/uploads/uploads/", "/uploads/") // ⚙️ fix principal
-                        .Replace("//uploads/", "/uploads/");       // doble barra al inicio
+                        .Replace("/uploads/uploads/", "/uploads/")
+                        .Replace("//uploads/", "/uploads/");
                 }
 
-                var inmueble = new Inmueble
+                lista.Add(new Inmueble
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
@@ -251,14 +262,11 @@ namespace InmobiliariaApp.Repository
                     NombrePropietario = reader.GetString("NombrePropietario"),
                     Activo = reader.GetBoolean("Activo"),
                     ImagenUrl = rawUrl
-                };
-
-                lista.Add(inmueble);
+                });
             }
 
             return lista;
         }
-
 
 
         // 🔹 OBTENER INMUEBLES ALQUILADOS (VIGENTES) POR PROPIETARIO
@@ -374,6 +382,14 @@ namespace InmobiliariaApp.Repository
 
             try
             {
+                // ✅ Si el TipoId no vino (0), conservar el valor actual
+                if (i.TipoId <= 0)
+                {
+                    var existente = Obtener(i.Id);
+                    if (existente != null)
+                        i.TipoId = existente.TipoId;
+                }
+
                 // 🔎 Depuración: mostrar valores recibidos
                 Console.WriteLine($"[DEBUG RepoInmueble] UPDATE Id={i.Id}, Dir={i.Direccion}, TipoId={i.TipoId}, PropietarioId={i.PropietarioId}, Precio={i.Precio}, Activo={i.Activo}, ImagenUrl={i.ImagenUrl}");
 
@@ -391,8 +407,8 @@ namespace InmobiliariaApp.Repository
 
                 // Base de la query
                 string sql = @"UPDATE Inmuebles 
-                       SET Direccion=@dir, TipoId=@tipoId, MetrosCuadrados=@m2, 
-                           Precio=@precio, PropietarioID=@prop, Activo=@activo";
+               SET Direccion=@dir, TipoId=@tipoId, MetrosCuadrados=@m2, 
+                   Precio=@precio, PropietarioID=@prop, Activo=@activo";
 
                 // Si hay imagen nueva, se incluye la columna
                 if (!string.IsNullOrEmpty(i.ImagenUrl))
@@ -431,6 +447,7 @@ namespace InmobiliariaApp.Repository
                 throw;
             }
         }
+
 
 
         // 🔹 BAJA LÓGICA
