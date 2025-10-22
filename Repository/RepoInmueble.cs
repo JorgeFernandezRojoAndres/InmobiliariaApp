@@ -29,7 +29,9 @@ namespace InmobiliariaApp.Repository
             command.Parameters.AddWithValue("@dir", i.Direccion);
             command.Parameters.AddWithValue("@tipoId", i.TipoId);  // ✅ ahora usa el FK
             command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
-            command.Parameters.AddWithValue("@precio", i.Precio);
+            // ✅ Forzar formato invariante para evitar escalado del decimal
+command.Parameters.AddWithValue("@precio",
+    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             command.Parameters.AddWithValue("@prop", i.PropietarioId);
             command.Parameters.AddWithValue("@activo", i.Activo);
 
@@ -391,7 +393,9 @@ namespace InmobiliariaApp.Repository
                 command.Parameters.AddWithValue("@dir", i.Direccion ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@tipoId", i.TipoId);
                 command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
-                command.Parameters.AddWithValue("@precio", i.Precio);
+                // ✅ Forzar formato invariante para evitar escalado del decimal
+command.Parameters.AddWithValue("@precio",
+    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 command.Parameters.AddWithValue("@prop", i.PropietarioId);
                 command.Parameters.AddWithValue("@activo", i.Activo);
                 command.Parameters.AddWithValue("@id", i.Id);
@@ -473,7 +477,9 @@ namespace InmobiliariaApp.Repository
                 command.Parameters.AddWithValue("@dir", i.Direccion ?? (object)DBNull.Value);
                 command.Parameters.AddWithValue("@tipoId", i.TipoId);
                 command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
-                command.Parameters.AddWithValue("@precio", i.Precio);
+                // ✅ Forzar formato invariante para evitar escalado del decimal
+command.Parameters.AddWithValue("@precio",
+    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 command.Parameters.AddWithValue("@prop", i.PropietarioId);
                 command.Parameters.AddWithValue("@activo", i.Activo);
                 command.Parameters.AddWithValue("@id", i.Id);

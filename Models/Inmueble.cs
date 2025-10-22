@@ -23,6 +23,7 @@ namespace InmobiliariaApp.Models
 
         // 🔹 Prop calculada para mostrar en combos/dropdowns
         public string Descripcion =>
-            $"{Direccion} - {TipoNombre} (${Precio}) - {NombrePropietario}";
+    $"{Direccion} - {TipoNombre} (${Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)}) - {NombrePropietario}";
+
     }
 }
