@@ -84,44 +84,45 @@ namespace InmobiliariaApp.Controllers
             return View();
         }
 
-        // ✅ POST: /Auth/Login
-        [HttpPost]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login(LoginViewModel model)
+       // ✅ POST: /Auth/Login
+[HttpPost]
+[AllowAnonymous]
+public async Task<IActionResult> Login(LoginViewModel model)
+{
+    if (ModelState.IsValid)
+    {
+        var usuario = _repoUsuario.ObtenerPorEmail(model.Email);
+
+        if (usuario == null || !BCrypt.Net.BCrypt.Verify(model.Password, usuario.PasswordHash))
         {
-            if (ModelState.IsValid)
-            {
-
-                var usuario = _repoUsuario.ObtenerPorEmail(model.Email);
-
-                if (usuario == null || !BCrypt.Net.BCrypt.Verify(model.Password, usuario.PasswordHash))
-                {
-
-                    ModelState.AddModelError("", "Credenciales inválidas");
-                    return View(model);
-                }
-
-                // Crear claims (👈 agregado AvatarUrl también)
-                var claims = new List<Claim>
-                {
-                    new Claim(ClaimTypes.Name, usuario.Email),
-                    new Claim(ClaimTypes.Role, usuario.Rol.ToString()),
-                    new Claim("FullName", usuario.Nombre + " " + usuario.Apellido),
-                    new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png")
-                };
-
-                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new AuthenticationProperties { IsPersistent = true };
-
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity),
-                    authProperties);
-
-                return RedirectToAction("Index", "Home");
-            }
-
+            ModelState.AddModelError("", "Credenciales inválidas");
             return View(model);
         }
+
+        // Crear claims (👈 agregado AvatarUrl también)
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()), // ✅ agregado
+            new Claim(ClaimTypes.Name, usuario.Email),
+            new Claim(ClaimTypes.Role, usuario.Rol.ToString()),
+            new Claim("FullName", usuario.Nombre + " " + usuario.Apellido),
+            new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png")
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var authProperties = new AuthenticationProperties { IsPersistent = true };
+
+        await HttpContext.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            new ClaimsPrincipal(claimsIdentity),
+            authProperties
+        );
+
+        return RedirectToAction("Index", "Home");
+    }
+
+    return View(model);
+}
 
         // ✅ GET: /Auth/Logout
         [Authorize]

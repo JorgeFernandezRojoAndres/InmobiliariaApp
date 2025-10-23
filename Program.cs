@@ -146,6 +146,7 @@ builder.Services.AddAuthorization(options =>
 // -------------------------
 // 🚀 Construcción del app
 // -------------------------
+builder.WebHost.UseUrls("http://0.0.0.0:5027");
 var app = builder.Build();
 
 // -------------------------

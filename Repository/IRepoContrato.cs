@@ -14,11 +14,14 @@ namespace InmobiliariaApp.Repository
         int Editar(Contrato contrato);
         int Eliminar(int idContrato, int idUsuario);
 
-
         // 🔹 Nuevo método para promoción
         IList<Contrato> ObtenerVigentesEntre(DateTime inicio, DateTime fin);
 
         // 🔹 Ya lo usás en RepoContrato (cuando marcás contratos vencidos)
         int MarcarComoVencido(int id);
+
+        // ✅ Agregados para el API móvil
+        IList<Pago> ObtenerPagosPorContrato(int contratoId);
+        IList<Contrato> ObtenerVigentesPorPropietario(int idPropietario);
     }
 }

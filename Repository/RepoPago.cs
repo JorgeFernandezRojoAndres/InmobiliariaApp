@@ -130,18 +130,37 @@ namespace InmobiliariaApp.Repository
 
         public int Alta(Pago pago)
 {
-    using var conn = new MySqlConnection(_connectionString); // ✅ ahora usa la conexión centralizada
-    var sql = @"INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor) 
-                VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor)";
-    using var cmd = new MySqlCommand(sql, conn);
-    cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
-    cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
-    cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
-    cmd.Parameters.AddWithValue("@importe", pago.Importe);
-    cmd.Parameters.AddWithValue("@creadoPor", pago.CreadoPor);
+    try
+    {
+        using var conn = new MySqlConnection(_connectionString);
+        const string sql = @"
+            INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor)
+            VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor);
+            SELECT LAST_INSERT_ID();";
 
-    conn.Open();
-    return cmd.ExecuteNonQuery();
+        using var cmd = new MySqlCommand(sql, conn);
+        cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
+        cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
+        cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
+        cmd.Parameters.AddWithValue("@importe", pago.Importe);
+        cmd.Parameters.AddWithValue("@creadoPor", pago.CreadoPor);
+
+        conn.Open();
+        var result = cmd.ExecuteScalar(); // ✅ devuelve el ID generado, no bloquea
+        conn.Close();
+
+        return Convert.ToInt32(result);
+    }
+    catch (MySqlException ex)
+    {
+        Console.WriteLine($"❌ Error MySQL al insertar pago: {ex.Message}");
+        throw;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"⚠️ Error general en Alta(Pago): {ex.Message}");
+        throw;
+    }
 }
 
         public int Modificacion(Pago pago)
