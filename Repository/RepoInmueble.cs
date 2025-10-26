@@ -30,8 +30,8 @@ namespace InmobiliariaApp.Repository
             command.Parameters.AddWithValue("@tipoId", i.TipoId);  // ✅ ahora usa el FK
             command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
             // ✅ Forzar formato invariante para evitar escalado del decimal
-command.Parameters.AddWithValue("@precio",
-    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+            command.Parameters.AddWithValue("@precio",
+                Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             command.Parameters.AddWithValue("@prop", i.PropietarioId);
             command.Parameters.AddWithValue("@activo", i.Activo);
 
@@ -47,7 +47,8 @@ command.Parameters.AddWithValue("@precio",
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
                i.PropietarioID, i.Activo,
                p.Nombre AS NombrePropietario,
-               t.Nombre AS TipoNombre
+               t.Nombre AS TipoNombre,
+               i.TipoId
         FROM Inmuebles i
         JOIN Personas p ON p.ID = i.PropietarioID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
@@ -65,7 +66,8 @@ command.Parameters.AddWithValue("@precio",
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
-                    TipoNombre = reader.GetString("TipoNombre"), // 🔹 ahora viene del JOIN
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -85,7 +87,9 @@ command.Parameters.AddWithValue("@precio",
             string sql = @"
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio, 
                p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
-               t.Nombre AS TipoNombre
+               t.Nombre AS TipoNombre,
+               i.TipoId
+
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id";
@@ -103,7 +107,8 @@ command.Parameters.AddWithValue("@precio",
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
-                    TipoNombre = reader.GetString("TipoNombre"),  // 🔹 ahora correcto
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -122,7 +127,8 @@ command.Parameters.AddWithValue("@precio",
             const string sql = @"
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio, 
                p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
-               t.Nombre AS TipoNombre
+               t.Nombre AS TipoNombre,
+               i.TipoId
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
@@ -145,7 +151,8 @@ command.Parameters.AddWithValue("@precio",
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
-                    TipoNombre = reader.GetString("TipoNombre"), // ✅ ahora correcto
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -165,7 +172,8 @@ command.Parameters.AddWithValue("@precio",
             const string sql = @"
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
                p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
-               t.Nombre AS TipoNombre
+               t.Nombre AS TipoNombre,
+               i.TipoId
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
@@ -195,7 +203,8 @@ command.Parameters.AddWithValue("@precio",
                 {
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
-                    TipoNombre = reader.GetString("TipoNombre"), // ✅ cambiado
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -231,6 +240,7 @@ command.Parameters.AddWithValue("@precio",
     SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
            p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
            t.Nombre AS TipoNombre,
+           i.TipoId,
            i.ImagenUrl
     FROM Inmuebles i
     JOIN Personas p ON i.PropietarioID = p.ID
@@ -259,6 +269,7 @@ command.Parameters.AddWithValue("@precio",
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
                     TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -270,55 +281,57 @@ command.Parameters.AddWithValue("@precio",
 
             return lista;
         }
-    public List<Inmueble> ObtenerPorPropietarioYActivo(int propietarioId, bool activo)
-{
-    var lista = new List<Inmueble>();
-    using var connection = new MySqlConnection(_connectionString);
+        public List<Inmueble> ObtenerPorPropietarioYActivo(int propietarioId, bool activo)
+        {
+            var lista = new List<Inmueble>();
+            using var connection = new MySqlConnection(_connectionString);
 
-    const string sql = @"
+            const string sql = @"
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
                p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
                t.Nombre AS TipoNombre,
+               i.TipoId,
                i.ImagenUrl
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
         WHERE i.PropietarioID = @propId AND i.Activo = @activo";
 
-    using var command = new MySqlCommand(sql, connection);
-    command.Parameters.AddWithValue("@propId", propietarioId);
-    command.Parameters.AddWithValue("@activo", activo);
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@propId", propietarioId);
+            command.Parameters.AddWithValue("@activo", activo);
 
-    connection.Open();
-    using var reader = command.ExecuteReader();
+            connection.Open();
+            using var reader = command.ExecuteReader();
 
-    while (reader.Read())
-    {
-        string? rawUrl = reader["ImagenUrl"] == DBNull.Value ? null : reader.GetString("ImagenUrl");
+            while (reader.Read())
+            {
+                string? rawUrl = reader["ImagenUrl"] == DBNull.Value ? null : reader.GetString("ImagenUrl");
 
-        if (!string.IsNullOrEmpty(rawUrl))
-        {
-            rawUrl = rawUrl
-                .Replace("/uploads/uploads/", "/uploads/")
-                .Replace("//uploads/", "/uploads/");
+                if (!string.IsNullOrEmpty(rawUrl))
+                {
+                    rawUrl = rawUrl
+                        .Replace("/uploads/uploads/", "/uploads/")
+                        .Replace("//uploads/", "/uploads/");
+                }
+
+                lista.Add(new Inmueble
+                {
+                    Id = reader.GetInt32("ID"),
+                    Direccion = reader.GetString("Direccion"),
+                    TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
+                    MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
+                    Precio = reader.GetDecimal("Precio"),
+                    PropietarioId = reader.GetInt32("PropietarioID"),
+                    NombrePropietario = reader.GetString("NombrePropietario"),
+                    Activo = reader.GetBoolean("Activo"),
+                    ImagenUrl = rawUrl
+                });
+            }
+
+            return lista;
         }
-
-        lista.Add(new Inmueble
-        {
-            Id = reader.GetInt32("ID"),
-            Direccion = reader.GetString("Direccion"),
-            TipoNombre = reader.GetString("TipoNombre"),
-            MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
-            Precio = reader.GetDecimal("Precio"),
-            PropietarioId = reader.GetInt32("PropietarioID"),
-            NombrePropietario = reader.GetString("NombrePropietario"),
-            Activo = reader.GetBoolean("Activo"),
-            ImagenUrl = rawUrl
-        });
-    }
-
-    return lista;
-}
 
 
 
@@ -330,7 +343,8 @@ command.Parameters.AddWithValue("@precio",
             const string sql = @"
         SELECT i.ID, i.Direccion, i.MetrosCuadrados, i.Precio,
                p.Nombre AS NombrePropietario, i.PropietarioID, i.Activo,
-               t.Nombre AS TipoNombre
+               t.Nombre AS TipoNombre,
+               i.TipoId
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
@@ -352,6 +366,7 @@ command.Parameters.AddWithValue("@precio",
                     Id = reader.GetInt32("ID"),
                     Direccion = reader.GetString("Direccion"),
                     TipoNombre = reader.GetString("TipoNombre"),
+                    TipoId = reader.GetInt32("TipoId"),
                     MetrosCuadrados = reader.GetInt32("MetrosCuadrados"),
                     Precio = reader.GetDecimal("Precio"),
                     PropietarioId = reader.GetInt32("PropietarioID"),
@@ -394,8 +409,8 @@ command.Parameters.AddWithValue("@precio",
                 command.Parameters.AddWithValue("@tipoId", i.TipoId);
                 command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
                 // ✅ Forzar formato invariante para evitar escalado del decimal
-command.Parameters.AddWithValue("@precio",
-    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                command.Parameters.AddWithValue("@precio",
+                    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 command.Parameters.AddWithValue("@prop", i.PropietarioId);
                 command.Parameters.AddWithValue("@activo", i.Activo);
                 command.Parameters.AddWithValue("@id", i.Id);
@@ -478,8 +493,8 @@ command.Parameters.AddWithValue("@precio",
                 command.Parameters.AddWithValue("@tipoId", i.TipoId);
                 command.Parameters.AddWithValue("@m2", i.MetrosCuadrados);
                 // ✅ Forzar formato invariante para evitar escalado del decimal
-command.Parameters.AddWithValue("@precio",
-    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                command.Parameters.AddWithValue("@precio",
+                    Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 command.Parameters.AddWithValue("@prop", i.PropietarioId);
                 command.Parameters.AddWithValue("@activo", i.Activo);
                 command.Parameters.AddWithValue("@id", i.Id);
