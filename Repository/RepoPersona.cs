@@ -133,10 +133,10 @@ namespace InmobiliariaApp.Repository
 
         // 🔹 Modificar persona
         // 🔹 Modificar persona (corrige persistencia del AvatarUrl)
-public void Modificar(Persona p)
-{
-    using var connection = new MySqlConnection(_connectionString);
-    const string sql = @"UPDATE Personas SET 
+        public void Modificar(Persona p)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            const string sql = @"UPDATE Personas SET 
                             Nombre=@nombre, 
                             Apellido=@apellido, 
                             DNI=@dni, 
@@ -146,19 +146,19 @@ public void Modificar(Persona p)
                             Clave=@clave
                          WHERE ID=@id";
 
-    using var command = new MySqlCommand(sql, connection);
-    command.Parameters.AddWithValue("@nombre", p.Nombre);
-    command.Parameters.AddWithValue("@apellido", p.Apellido);
-    command.Parameters.AddWithValue("@dni", p.Documento);
-    command.Parameters.AddWithValue("@correo", p.Email);
-    command.Parameters.AddWithValue("@telefono", p.Telefono ?? (object)DBNull.Value);
-    command.Parameters.AddWithValue("@avatar", p.AvatarUrl ?? (object)DBNull.Value);
-    command.Parameters.AddWithValue("@clave", p.Clave ?? (object)DBNull.Value); // ✅ agregado
-    command.Parameters.AddWithValue("@id", p.Id);
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@nombre", p.Nombre);
+            command.Parameters.AddWithValue("@apellido", p.Apellido);
+            command.Parameters.AddWithValue("@dni", p.Documento);
+            command.Parameters.AddWithValue("@correo", p.Email);
+            command.Parameters.AddWithValue("@telefono", p.Telefono ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@avatar", p.AvatarUrl ?? (object)DBNull.Value);
+            command.Parameters.AddWithValue("@clave", p.Clave ?? (object)DBNull.Value); // ✅ agregado
+            command.Parameters.AddWithValue("@id", p.Id);
 
-    connection.Open();
-    command.ExecuteNonQuery();
-}
+            connection.Open();
+            command.ExecuteNonQuery();
+        }
 
 
         // 🔹 Eliminar persona
@@ -244,48 +244,48 @@ public void Modificar(Persona p)
 
         // ✅ Obtener persona por email (login móvil)
         public Persona? ObtenerPorEmail(string email)
-{
-    Persona? persona = null;
-    using var connection = new MySqlConnection(_connectionString);
-    const string sql = "SELECT * FROM personas WHERE Email = @Email";
-    using var command = new MySqlCommand(sql, connection);
-    command.Parameters.AddWithValue("@Email", email);
-    connection.Open();
-    using var reader = command.ExecuteReader();
-
-    if (reader.Read())
-    {
-        persona = new Persona
         {
-            Id = reader.GetInt32("Id"),
-            Nombre = reader.GetString("Nombre"),
-            Apellido = reader.GetString("Apellido"),
-            Documento = reader.GetString("DNI"),
-            Email = reader.GetString("Email"),
-            Clave = reader["Clave"]?.ToString(),
-            Telefono = reader["Telefono"]?.ToString(),
-            // ✅ Verifica que exista la columna antes de intentar leerla
-            AvatarUrl = MySqlReaderExtensions.HasColumn(reader, "AvatarUrl") ? reader["AvatarUrl"]?.ToString() : null
-        };
-    }
-    return persona;
-}
+            Persona? persona = null;
+            using var connection = new MySqlConnection(_connectionString);
+            const string sql = "SELECT * FROM personas WHERE Email = @Email";
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@Email", email);
+            connection.Open();
+            using var reader = command.ExecuteReader();
 
-// =====================================================
-// ✅ Helper de extensión (definilo DENTRO del namespace, FUERA de la clase RepoPersona)
-// =====================================================
-internal static class MySqlReaderExtensions
-{
-    public static bool HasColumn(MySqlDataReader reader, string columnName)
-    {
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
-                return true;
+            if (reader.Read())
+            {
+                persona = new Persona
+                {
+                    Id = reader.GetInt32("Id"),
+                    Nombre = reader.GetString("Nombre"),
+                    Apellido = reader.GetString("Apellido"),
+                    Documento = reader.GetString("DNI"),
+                    Email = reader.GetString("Email"),
+                    Clave = reader["Clave"]?.ToString(),
+                    Telefono = reader["Telefono"]?.ToString(),
+                    // ✅ Verifica que exista la columna antes de intentar leerla
+                    AvatarUrl = MySqlReaderExtensions.HasColumn(reader, "AvatarUrl") ? reader["AvatarUrl"]?.ToString() : null
+                };
+            }
+            return persona;
         }
-        return false;
-    }
-}
+
+        // =====================================================
+        // ✅ Helper de extensión (definilo DENTRO del namespace, FUERA de la clase RepoPersona)
+        // =====================================================
+        internal static class MySqlReaderExtensions
+        {
+            public static bool HasColumn(MySqlDataReader reader, string columnName)
+            {
+                for (int i = 0; i < reader.FieldCount; i++)
+                {
+                    if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                        return true;
+                }
+                return false;
+            }
+        }
 
 
         // ✅ Verificar si tiene un rol determinado
@@ -328,5 +328,107 @@ internal static class MySqlReaderExtensions
             }
             return roles;
         }
+        public List<dynamic> ObtenerInquilinosConInmueble(int propietarioId)
+        {
+            var lista = new List<dynamic>();
+
+            using var connection = new MySqlConnection(_connectionString);
+
+            const string sql = @"
+        SELECT 
+            p.ID AS InquilinoId,
+            p.Nombre,
+            p.Apellido,
+            p.DNI,
+            p.Email,
+            i.ID AS InmuebleId,
+            i.Direccion,
+            i.ImagenUrl
+        FROM personas p
+        JOIN persona_roles pr ON p.ID = pr.persona_id
+        JOIN roles r ON pr.rol_id = r.id AND r.nombre = 'Inquilino'
+        JOIN contratos c ON c.InquilinoID = p.ID AND c.Estado = 'Vigente'
+        JOIN inmuebles i ON i.ID = c.InmuebleID
+        WHERE i.PropietarioID = @propietarioId;
+    ";
+
+            using var command = new MySqlCommand(sql, connection);
+            command.Parameters.AddWithValue("@propietarioId", propietarioId);
+
+            connection.Open();
+            using var reader = command.ExecuteReader();
+
+            while (reader.Read())
+            {
+                lista.Add(new
+                {
+                    InquilinoId = reader.GetInt32("InquilinoId"),
+                    Nombre = reader.GetString("Nombre"),
+                    Apellido = reader.GetString("Apellido"),
+                    DNI = reader.GetString("DNI"),
+                    Email = reader.GetString("Email"),
+                    Inmueble = new
+                    {
+                        Id = reader.GetInt32("InmuebleId"),
+                        Direccion = reader.GetString("Direccion"),
+                        ImagenUrl = reader["ImagenUrl"] != DBNull.Value
+                            ? reader.GetString("ImagenUrl")
+                            : null
+                    }
+                });
+            }
+
+            return lista;
+        }
+        public dynamic? ObtenerInquilinoPorId(int idInquilino)
+        {
+            using var conn = new MySqlConnection(_connectionString);
+
+            const string sql = @"
+        SELECT 
+            p.ID,
+            p.Nombre,
+            p.Apellido,
+            p.DNI,
+            p.Email,
+            p.Telefono,
+            inm.ID AS InmuebleId,
+            inm.Direccion,
+            inm.ImagenUrl AS ImagenUrlInmueble
+        FROM personas p
+        JOIN persona_roles pr ON p.ID = pr.persona_id
+        JOIN roles r ON pr.rol_id = r.id AND r.nombre = 'Inquilino'
+        JOIN contratos c ON c.InquilinoID = p.ID
+        JOIN inmuebles inm ON inm.ID = c.InmuebleID
+        WHERE p.ID = @id
+        LIMIT 1;";
+
+            using var cmd = new MySqlCommand(sql, conn);
+            cmd.Parameters.AddWithValue("@id", idInquilino);
+
+            conn.Open();
+            using var reader = cmd.ExecuteReader();
+
+            if (reader.Read())
+            {
+                return new
+                {
+                    Id = reader.GetInt32("ID"),
+                    Nombre = reader.GetString("Nombre"),
+                    Apellido = reader.GetString("Apellido"),
+                    Dni = reader.GetString("DNI"),
+                    Email = reader.GetString("Email"),
+                    Telefono = reader["Telefono"] != DBNull.Value ? reader.GetString("Telefono") : "-",
+                    Direccion = reader.GetString("Direccion"),
+                    ImagenUrlInmueble = reader["ImagenUrlInmueble"] != DBNull.Value
+                                        ? reader.GetString("ImagenUrlInmueble")
+                                        : null
+                };
+            }
+
+            return null;
+        }
+
+
     }
 }
