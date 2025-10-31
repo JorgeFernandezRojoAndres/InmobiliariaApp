@@ -17,6 +17,7 @@ namespace InmobiliariaApp.Models
 
         public decimal MontoMensual { get; set; }
 
+        // 🔹 Estado actual del contrato
         public string Estado { get; set; } = "Vigente";
 
         // 🔹 Auditoría
@@ -24,6 +25,11 @@ namespace InmobiliariaApp.Models
         public Usuario? UsuarioCreador { get; set; }        // Usuario creador (JOIN con tabla usuarios)
         public int? TerminadoPor { get; set; }              // Id del usuario que lo terminó (nullable)
         public Usuario? UsuarioTerminador { get; set; }     // Usuario terminador (JOIN con tabla usuarios)
+
+        // 🔹 Renovación / Rescisión (NUEVOS CAMPOS)
+        public DateTime? FechaRescision { get; set; }       // Fecha en que se rescindió el contrato
+        public decimal? MontoMulta { get; set; }            // Multa calculada por rescisión anticipada
+        public int? ContratoOriginalId { get; set; }        // Referencia al contrato anterior si es una renovación
 
         // 🔹 Propiedad calculada para mostrar en dropdowns y vistas
         public string Descripcion

@@ -24,45 +24,91 @@ namespace InmobiliariaApp.Controllers
             this.repoPago = repoPago;
         }
 
-        public IActionResult Index(DateTime? inicio, DateTime? fin)
+        [Authorize(Roles = "Propietario,Administrador,Empleado")]
+        [Authorize(Roles = "Propietario,Administrador,Empleado")]
+        public IActionResult Index(DateTime? inicio, DateTime? fin, int? propietarioId)
         {
             IList<Contrato> contratos;
 
-            if (inicio.HasValue && fin.HasValue && inicio <= fin)
+            // 👤 Obtener el ID del usuario logueado
+            var claimId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(claimId))
             {
-                contratos = repo.ObtenerVigentesEntre(inicio.Value, fin.Value);
-                ViewData["Title"] = $"Contratos vigentes entre {inicio:dd/MM/yyyy} y {fin:dd/MM/yyyy}";
+                TempData["Error"] = "No se pudo identificar al usuario logueado.";
+                return RedirectToAction("Login", "Usuarios");
+            }
+
+            int userId = int.Parse(claimId);
+            bool esPropietario = User.IsInRole("Propietario");
+
+            if (esPropietario)
+            {
+                // 🔹 Solo contratos del propietario logueado
+                contratos = repo.ObtenerTodos()
+                    .Where(c => c.Inmueble != null && c.Inmueble.PropietarioId == userId)
+                    .ToList();
+                ViewBag.Propietarios = null;
             }
             else
             {
+                // 🔹 Mostrar combo de propietarios
+                var propietarios = repoPersona.ObtenerPropietarios();
+                ViewBag.Propietarios = propietarios;
+                ViewBag.PropietarioSeleccionado = propietarioId;
+
                 contratos = repo.ObtenerTodos();
-                ViewData["Title"] = "Contratos";
+
+                // 🔹 Filtrar por propietario (solo si se selecciona)
+                if (propietarioId.HasValue && propietarioId.Value > 0)
+                {
+                    contratos = contratos
+                        .Where(c => c.Inmueble != null && c.Inmueble.PropietarioId == propietarioId.Value)
+                        .ToList();
+                }
+            }
+
+            // 🔹 Filtrar por fechas (si están definidas)
+            if (inicio.HasValue && fin.HasValue && inicio <= fin)
+            {
+                contratos = contratos
+                    .Where(c => c.FechaInicio >= inicio.Value && c.FechaFin <= fin.Value)
+                    .ToList();
+                ViewData["Title"] = $"Contratos entre {inicio:dd/MM/yyyy} y {fin:dd/MM/yyyy}";
+            }
+            else
+            {
+                ViewData["Title"] = esPropietario ? "Contratos" : "Contratos";
             }
 
             return View(contratos);
         }
+
+
         public IActionResult Renovar(int id)
         {
             var original = repo.ObtenerPorId(id);
             if (original == null) return NotFound();
 
-            // Nuevo contrato precargado
+            // ✅ Marcar el contrato original como Renovado
+            original.Estado = "Renovado";
+            repo.Editar(original);
+
+            // ✅ Crear nuevo contrato vinculado al anterior
             var nuevo = new Contrato
             {
                 IdInquilino = original.IdInquilino,
                 IdInmueble = original.IdInmueble,
                 MontoMensual = original.MontoMensual,
                 Estado = "Vigente",
-                // 🚨 Importante: no copiamos las fechas, dejamos sugerencia
                 FechaInicio = original.FechaFin.AddDays(1),
-                FechaFin = original.FechaFin.AddYears(1)
+                FechaFin = original.FechaFin.AddYears(1),
+                ContratoOriginalId = original.Id // 🔹 Nuevo vínculo entre contratos
             };
 
-            // Pasamos los selects de inquilinos e inmuebles
             CargarSelects(nuevo.IdInquilino, nuevo.IdInmueble);
-
             return View("Create", nuevo);
         }
+
 
         public IActionResult PorInmueble(int id)
         {
@@ -239,6 +285,56 @@ namespace InmobiliariaApp.Controllers
             ViewBag.Inquilinos = new SelectList(inquilinos, "Id", "Display", inquilinoId);
             ViewBag.Inmuebles = new SelectList(inmueblesLista, "Id", "Display", inmuebleId);
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Rescindir(int id)
+        {
+            var contrato = repo.ObtenerPorId(id);
+            if (contrato == null)
+            {
+                TempData["Error"] = "Contrato no encontrado.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (contrato.Estado != "Vigente")
+            {
+                TempData["Error"] = "Solo los contratos vigentes pueden rescindirse.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            var hoy = DateTime.Now;
+
+            if (hoy >= contrato.FechaFin)
+            {
+                TempData["Error"] = "El contrato ya finalizó.";
+                return RedirectToAction(nameof(Details), new { id });
+            }
+
+            // 🧮 Calcular meses restantes y multa (50% de los meses restantes)
+            int mesesRestantes = ((contrato.FechaFin.Year - hoy.Year) * 12) + contrato.FechaFin.Month - hoy.Month;
+            if (mesesRestantes < 1) mesesRestantes = 1;
+
+            decimal multa = contrato.MontoMensual * 0.5m * mesesRestantes;
+
+            // 👤 Auditoría
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (claim != null)
+            {
+                contrato.TerminadoPor = int.Parse(claim.Value);
+            }
+
+            contrato.Estado = "Rescindido";
+            contrato.FechaRescision = hoy;
+            contrato.MontoMulta = multa;
+
+            repo.Editar(contrato);
+
+            TempData["Mensaje"] = $"Contrato rescindido correctamente. Multa: ${multa:N2}";
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+
 
 
     }

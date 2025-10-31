@@ -10,6 +10,8 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using System.Globalization;
 using System.Threading;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
@@ -148,6 +150,31 @@ builder.Services.AddAuthorization(options =>
 // -------------------------
 builder.WebHost.UseUrls("http://0.0.0.0:5027");
 var app = builder.Build();
+
+// -------------------------
+// 🔥 Inicializar Firebase Admin SDK
+// -------------------------
+try
+{
+    var firebasePath = Path.Combine(Directory.GetCurrentDirectory(), "Keys", "firebase-adminsdk.json");
+
+    if (System.IO.File.Exists(firebasePath))
+    {
+        FirebaseApp.Create(new AppOptions
+        {
+            Credential = GoogleCredential.FromFile(firebasePath)
+        });
+        Console.WriteLine("✅ Firebase Admin inicializado correctamente");
+    }
+    else
+    {
+        Console.WriteLine("⚠️ No se encontró el archivo firebase-adminsdk.json en la carpeta Keys");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine("💥 Error al inicializar Firebase: " + ex.Message);
+}
 
 // -------------------------
 // 🧭 Middleware

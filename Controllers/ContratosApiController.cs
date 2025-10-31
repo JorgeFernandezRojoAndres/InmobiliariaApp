@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization; 
+using Microsoft.AspNetCore.Authorization;  
 using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
@@ -14,16 +14,14 @@ namespace InmobiliariaApp.Controllers.Api
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class ContratosApiController : ControllerBase
     {
-        // ✅ Cambio: ahora usa la interfaz en lugar de la clase concreta
         private readonly IRepoContrato _repo;
 
-        // ✅ Inyección correcta según Program.cs
         public ContratosApiController(IRepoContrato repo)
         {
             _repo = repo;
         }
 
-        // 🔹 GET: api/Contratos/vigentes
+        // 🔹 GET: api/contratos/vigentes
         [HttpGet("vigentes")]
         public IActionResult GetVigentes()
         {
@@ -43,7 +41,7 @@ namespace InmobiliariaApp.Controllers.Api
                 var contratos = _repo.ObtenerVigentesPorPropietario(idPropietario);
 
                 if (contratos == null || !contratos.Any())
-                    return Ok(new List<Contrato>()); // ✅ devuelve lista vacía en lugar de error
+                    return Ok(new List<Contrato>());
 
                 return Ok(contratos);
             }
@@ -57,7 +55,7 @@ namespace InmobiliariaApp.Controllers.Api
             }
         }
 
-        // 🔹 GET: api/Contratos/{id}/pagos
+        // 🔹 GET: api/contratos/{id}/pagos
         [HttpGet("{id}/pagos")]
         public IActionResult GetPagosPorContrato(int id)
         {
@@ -71,6 +69,59 @@ namespace InmobiliariaApp.Controllers.Api
                 return StatusCode(500, new
                 {
                     mensaje = "Error al obtener pagos",
+                    detalle = ex.Message
+                });
+            }
+        }
+
+        // ⚖️ POST: api/contratos/rescindir/{id}
+        [HttpPost("rescindir/{id}")]
+        public IActionResult RescindirContrato(int id)
+        {
+            try
+            {
+                var contrato = _repo.ObtenerPorId(id);
+                if (contrato == null)
+                    return NotFound(new { mensaje = "Contrato no encontrado." });
+
+                if (contrato.Estado != "Vigente")
+                    return BadRequest(new { mensaje = "Solo los contratos vigentes pueden rescindirse." });
+
+                var hoy = DateTime.Now;
+                if (hoy >= contrato.FechaFin)
+                    return BadRequest(new { mensaje = "El contrato ya finalizó." });
+
+                // 🧮 Calcular meses restantes y multa
+                int mesesRestantes = ((contrato.FechaFin.Year - hoy.Year) * 12) + contrato.FechaFin.Month - hoy.Month;
+                if (mesesRestantes < 1) mesesRestantes = 1;
+
+                decimal multa = contrato.MontoMensual * 0.5m * mesesRestantes;
+
+                // 👤 Auditoría
+                var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
+                if (claim != null)
+                {
+                    contrato.TerminadoPor = int.Parse(claim.Value);
+                }
+
+                contrato.Estado = "Rescindido";
+                contrato.FechaRescision = hoy;
+                contrato.MontoMulta = multa;
+
+                _repo.Editar(contrato);
+
+                return Ok(new
+                {
+                    mensaje = $"Contrato rescindido correctamente.",
+                    multa = multa.ToString("N2"),
+                    contratoId = id
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al rescindir contrato",
                     detalle = ex.Message
                 });
             }

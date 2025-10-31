@@ -3,10 +3,12 @@ using InmobiliariaApp.Models;
 using InmobiliariaApp.Repository;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using FirebaseAdmin.Messaging; // 🆕 Enviar notificaciones FCM
+using System.Threading.Tasks;
 
 namespace InmobiliariaApp.Controllers
-{   [Authorize(Roles = "Administrador")]
-
+{
+    [Authorize(Roles = "Administrador")]
     [Authorize]
     public class PagosController : Controller
     {
@@ -45,23 +47,27 @@ namespace InmobiliariaApp.Controllers
         // POST: /Pagos/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Pago pago)
+        public async Task<IActionResult> Create(Pago pago)
         {
             if (ModelState.IsValid)
             {
                 try
                 {
-                    // 👤 Obtener el ID del usuario logueado desde los Claims
+                    // 👤 Obtener ID del usuario logueado desde los Claims
                     var claim = User.FindFirst(ClaimTypes.NameIdentifier);
                     if (claim != null)
                     {
                         int idUsuario = int.Parse(claim.Value);
-                        pago.CreadoPor = idUsuario; // Guardamos quién lo creó
+                        pago.CreadoPor = idUsuario;
                     }
 
+                    // 💾 Guardar en base de datos
                     repo.Alta(pago);
-
                     TempData["SuccessMessage"] = "✅ Pago registrado correctamente.";
+
+                    // 🔔 Enviar notificación Firebase
+                    await EnviarNotificacionPago(pago);
+
                     return RedirectToAction(nameof(Index));
                 }
                 catch (Exception ex)
@@ -73,6 +79,40 @@ namespace InmobiliariaApp.Controllers
             // 🔹 Si falla la validación o hay error, recargamos contratos
             ViewBag.Contratos = repoContratos.ObtenerTodos();
             return View(pago);
+        }
+
+        // 🆕 🔔 Método para enviar notificación FCM con datos adicionales
+        private async Task EnviarNotificacionPago(Pago pago)
+        {
+            try
+            {
+                string titulo = "Nuevo pago registrado";
+                string cuerpo = $"Se acreditó el pago #{pago.Id} del contrato #{pago.ContratoId}.";
+
+                var message = new Message()
+                {
+                    Notification = new Notification
+                    {
+                        Title = titulo,
+                        Body = cuerpo
+                    },
+                    Data = new Dictionary<string, string>
+                    {
+                        { "title", titulo },
+                        { "body", $"Pago #{pago.Id} confirmado correctamente." },
+                        { "screen", "pagos" }
+                    },
+                    // 🔹 Todos los dispositivos suscriptos al tema "pagos" lo recibirán
+                    Topic = "pagos"
+                };
+
+                string response = await FirebaseMessaging.DefaultInstance.SendAsync(message);
+                Console.WriteLine($"✅ Notificación enviada correctamente: {response}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Error al enviar notificación Firebase: {ex.Message}");
+            }
         }
 
         // GET: /Pagos/Edit/5
@@ -97,7 +137,6 @@ namespace InmobiliariaApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // 🔹 Si hay error de validación, recargamos contratos
             ViewBag.Contratos = repoContratos.ObtenerTodos();
             return View(pago);
         }
@@ -119,7 +158,7 @@ namespace InmobiliariaApp.Controllers
             if (claim != null)
             {
                 int idUsuario = int.Parse(claim.Value);
-                repo.Baja(id, idUsuario); // ahora registra quién lo anuló
+                repo.Baja(id, idUsuario);
             }
 
             return RedirectToAction(nameof(Index));
