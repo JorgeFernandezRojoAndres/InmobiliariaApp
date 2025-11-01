@@ -24,7 +24,7 @@ var builder = WebApplication.CreateBuilder(args);
 // 🧩 Servicios principales
 // -------------------------
 builder.Services.AddControllersWithViews();
-builder.Services.AddControllers(); // ✅ asegura que los controladores API se registren correctamente
+ 
 
 // -------------------------
 // 🧩 Inyección de dependencias
@@ -217,6 +217,15 @@ app.UseStaticFiles(new StaticFileOptions
     FileProvider = new PhysicalFileProvider(uploadsPath),
     RequestPath = "/uploads"
 });
+app.Use(async (context, next) =>
+{
+    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+    if (string.IsNullOrEmpty(authHeader))
+    {
+        Console.WriteLine($"⚠️ Petición sin JWT → {context.Request.Method} {context.Request.Path}");
+    }
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -243,7 +252,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // 🌍 Servidor accesible en red local
-app.Urls.Add("http://0.0.0.0:5027");
+
 Console.WriteLine("🌍 Servidor accesible en red local: http://0.0.0.0:5027");
 
 app.Run();
