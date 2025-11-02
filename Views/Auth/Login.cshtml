@@ -1,0 +1,51 @@
+@model InmobiliariaApp.Models.LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<div class="container">
+    <div class="heading">Sign In</div>
+    <form asp-action="Login" method="post" class="form">
+        @Html.AntiForgeryToken()
+
+        <input required class="input" asp-for="Email" placeholder="E-mail" type="email" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+
+        <input required class="input" asp-for="Password" placeholder="Password" type="password" />
+        <span asp-validation-for="Password" class="text-danger"></span>
+
+        <span class="forgot-password">
+            <a asp-action="ForgotPassword" asp-controller="Auth">Forgot Password ?</a>
+        </span>
+
+        <input class="login-button" type="submit" value="Sign In" />
+    </form>
+
+    <div style="color:red">
+        @Html.ValidationSummary()
+    </div>
+
+    <div class="social-account-container">
+        <span class="title">Or Sign in with</span>
+        <div class="social-accounts">
+            <button type="button" class="social-button google">
+                <svg class="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 488 512">
+                    <path d="M488 261.8C488 403.3 ..."></path>
+                </svg>
+            </button>
+            <button type="button" class="social-button apple">
+                <svg class="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 384 512">
+                    <path d="M318.7 268.7c..."></path>
+                </svg>
+            </button>
+            <button type="button" class="social-button twitter">
+                <svg class="svg" xmlns="http://www.w3.org/2000/svg" height="1em" viewBox="0 0 512 512">
+                    <path d="M389.2 48h70.6L305..."></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <span class="agreement"><a href="#">Learn user licence agreement</a></span>
+</div>

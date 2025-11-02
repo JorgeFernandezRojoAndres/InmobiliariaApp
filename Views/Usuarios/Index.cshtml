@@ -1,0 +1,51 @@
+@model IEnumerable<InmobiliariaApp.Models.Usuario>
+
+@{
+    ViewData["Title"] = "Usuarios";
+}
+
+<h2>Usuarios</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<p>
+    <a asp-action="Crear" class="btn btn-primary">➕ Nuevo Usuario</a>
+</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Nombre</th>
+            <th>Apellido</th>
+            <th>Rol</th>
+            <th>Avatar</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var u in Model)
+    {
+        <tr>
+            <td>@u.Email</td>
+            <td>@u.Nombre</td>
+            <td>@u.Apellido</td>
+            <td>@u.Rol</td>
+            <td>
+                <img src="@u.AvatarUrl" alt="avatar" width="40" height="40" class="rounded-circle" />
+            </td>
+            <td>
+                <a asp-action="Editar" asp-route-id="@u.Id" class="btn btn-sm btn-warning">✏️ Editar</a>
+                <a asp-action="Eliminar" asp-route-id="@u.Id" class="btn btn-sm btn-danger">🗑️ Eliminar</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>

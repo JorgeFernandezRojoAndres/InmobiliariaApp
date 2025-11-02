@@ -1,0 +1,67 @@
+@model InmobiliariaApp.Models.Usuario
+
+@{
+    ViewData["Title"] = "Editar Usuario";
+}
+
+<h2>Editar Usuario</h2>
+
+<!-- 👇 importante: enctype para permitir subida de archivos -->
+<form asp-action="Editar" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Nombre" class="form-label"></label>
+        <input asp-for="Nombre" class="form-control" />
+        <span asp-validation-for="Nombre" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Apellido" class="form-label"></label>
+        <input asp-for="Apellido" class="form-control" />
+        <span asp-validation-for="Apellido" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Rol" class="form-label"></label>
+        <select asp-for="Rol" class="form-select" asp-items="Html.GetEnumSelectList<InmobiliariaApp.Models.RolUsuario>()"></select>
+        <span asp-validation-for="Rol" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contraseña (opcional)</label>
+        <input type="password" name="NuevaPassword" class="form-control" placeholder="Dejar vacío para mantener la actual" />
+    </div>
+
+    <!-- 👇 nueva sección: permite elegir archivo -->
+    <div class="mb-3">
+        <label class="form-label">Avatar (opcional)</label>
+        <input type="file" name="AvatarFile" class="form-control" />
+        @{
+            var avatarActual = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+                ? "/avatars/default.png"
+                : Model.AvatarUrl;
+        }
+        <div class="mt-2">
+            <img src="@avatarActual" alt="Avatar actual" width="80" class="rounded" />
+        </div>
+    </div>
+
+    <!-- conservamos el campo existente por compatibilidad -->
+    <input type="hidden" asp-for="AvatarUrl" />
+
+    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+</form>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

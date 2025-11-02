@@ -1,0 +1,150 @@
+﻿@using System.Security.Claims
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - InmobiliariaApp</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/navbar-uiverse.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/InmobiliariaApp.styles.css" asp-append-version="true" />
+    <!-- 🔹 Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+    @* 🔹 CSS específico para Login y Registro *@
+    @if (ViewData["Title"]?.ToString() == "Login")
+    {
+        <link rel="stylesheet" href="~/css/login.css" asp-append-version="true" />
+    }
+    else if (ViewData["Title"]?.ToString() == "Registrarse")
+    {
+        <link rel="stylesheet" href="~/css/register-uiverse.css" asp-append-version="true" />
+    }
+</head>
+
+<body>
+    <header>
+    <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
+        <div class="container-fluid">
+            <!-- 🔹 Logo con icono + texto -->
+            <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
+                <i class="bi bi-house-door-fill me-2"></i>
+                <span>Inicio</span>
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+                    aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <ul class="navbar-nav ms-auto">
+                    @if (User?.Identity?.IsAuthenticated ?? false)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="perfilDropdown"
+                               role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <img src="@(User.FindFirst("AvatarUrl")?.Value ?? "/avatars/default.png")" alt="Avatar"
+                                     class="rounded-circle me-2" style="width:32px;height:32px;object-fit:cover;" />
+                                <span class="d-none d-md-inline">
+                                    @User.FindFirst("FullName")?.Value
+                                </span>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="perfilDropdown">
+                                <li class="dropdown-item-text">
+                                    <small class="text-muted">Rol:
+                                        @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</small>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Perfil" asp-action="Editar">Mi Perfil</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a>
+                                </li>
+                            </ul>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Login">Login</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Auth" asp-action="Register">Registrarse</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 🔹 Solo mostrar menú extendido si NO estamos en Login ni Register -->
+    @if (ViewData["Title"]?.ToString() != "Login" && ViewData["Title"]?.ToString() != "Registrarse")
+    {
+        <div class="d-none d-md-flex justify-content-center my-2">
+            <div class="uv-nav">
+                <div class="uv-shell">
+                    <div class="uv-btn uv-dropdown">
+                        Inmuebles ▾
+                        <div class="uv-dropdown-menu">
+                            <a class="uv-subbtn" asp-controller="Inmuebles" asp-action="Index">Todos</a>
+                            <a class="uv-subbtn" asp-controller="Inmuebles" asp-action="DisponiblesEntreFechas">Disponibles por fechas</a>
+                        </div>
+                    </div>
+                    @if (User?.IsInRole("Administrador") ?? false)
+                    {
+                        <a class="uv-btn" asp-controller="Pagos" asp-action="Index">Pagos</a>
+                        <a class="uv-btn" asp-controller="Usuarios" asp-action="Index">Usuarios</a>
+                    }
+                    <a class="uv-btn" asp-controller="Contratos" asp-action="Index">Contratos</a>
+                    <div class="uv-btn uv-dropdown">
+                        Personas ▾
+                        <div class="uv-dropdown-menu">
+                            <a class="uv-subbtn" asp-controller="Inquilinos" asp-action="Index">Inquilinos</a>
+                            <a class="uv-subbtn" asp-controller="Propietarios" asp-action="Index">Propietarios</a>
+                            <a class="uv-subbtn" asp-controller="Personas" asp-action="Index">Todas</a>
+                        </div>
+                    </div>
+
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 60" height="60" width="620" overflow="visible" class="uv-outline">
+                        <rect stroke-width="5" fill="transparent" height="60" width="620" y="0" x="0" pathLength="100" class="uv-rect"></rect>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    }
+</header>
+
+
+    @if (ViewData["Title"]?.ToString() == "Login" || ViewData["Title"]?.ToString() == "Registrarse")
+    {
+        <main role="main">
+            @RenderBody()
+        </main>
+    }
+    else
+    {
+        <div class="container">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+    }
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2025 - InmobiliariaApp -
+            <a asp-controller="Home" asp-action="Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

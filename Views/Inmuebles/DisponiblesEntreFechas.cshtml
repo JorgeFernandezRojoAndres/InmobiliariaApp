@@ -1,0 +1,51 @@
+@model IEnumerable<InmobiliariaApp.Models.Inmueble>
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Inmuebles disponibles entre fechas";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<form asp-action="DisponiblesEntreFechas" method="get" class="row g-3 mb-4">
+    <div class="col-md-4">
+        <label for="inicio" class="form-label">Fecha inicio</label>
+        <input type="date" id="inicio" name="inicio" class="form-control" required />
+    </div>
+    <div class="col-md-4">
+        <label for="fin" class="form-label">Fecha fin</label>
+        <input type="date" id="fin" name="fin" class="form-control" required />
+    </div>
+    <div class="col-md-4 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </div>
+</form>
+
+@if (Model != null && Model.Any())
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Dirección</th>
+                <th>Tipo</th>
+                <th>Metros²</th>
+                <th>Precio</th>
+                <th>Propietario</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var i in Model)
+        {
+            <tr>
+                <td>@i.Direccion</td>
+                <td>@i.TipoNombre</td>
+                <td>@i.MetrosCuadrados</td>
+                <td>@i.Precio</td>
+                <td>@i.NombrePropietario</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+else if (Model != null)
+{
+    <p class="text-muted">No se encontraron inmuebles disponibles en el rango seleccionado.</p>
+}

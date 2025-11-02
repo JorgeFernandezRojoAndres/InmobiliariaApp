@@ -1,0 +1,48 @@
+@model InmobiliariaApp.Models.Inmueble
+
+<h2>Edición de Inmueble</h2>
+
+<form asp-action="Guardar" method="post">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Direccion" class="form-label"></label>
+        <input asp-for="Direccion" class="form-control" />
+        <span asp-validation-for="Direccion" class="text-danger"></span>
+    </div>
+
+    <!-- ✅ Select de Tipo de Inmueble corregido -->
+    <div class="mb-3">
+        <label asp-for="TipoId" class="form-label">Tipo de Inmueble</label>
+        <select asp-for="TipoId" class="form-control"
+                asp-items="@(new SelectList(ViewBag.TipoId ?? ViewBag.TiposInmuebles, "Id", "Nombre", Model.TipoId))">
+            <option value="">-- Seleccione un Tipo --</option>
+        </select>
+        <span asp-validation-for="TipoId" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="MetrosCuadrados" class="form-label"></label>
+        <input asp-for="MetrosCuadrados" class="form-control" type="number" />
+        <span asp-validation-for="MetrosCuadrados" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Precio" class="form-label"></label>
+        <input asp-for="Precio" class="form-control" type="number" step="0.01" />
+        <span asp-validation-for="Precio" class="text-danger"></span>
+    </div>
+
+    <!-- ✅ Select de Propietario mantenido y compatible -->
+    <div class="mb-3">
+        <label asp-for="PropietarioId" class="form-label"></label>
+        <select asp-for="PropietarioId" class="form-control"
+                asp-items="@(new SelectList(ViewBag.PropietarioId ?? ViewBag.Propietarios, "Id", "NombreCompleto", Model.PropietarioId))">
+            <option value="">-- Seleccione un Propietario --</option>
+        </select>
+        <span asp-validation-for="PropietarioId" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Guardar</button>
+    <a asp-action="Index" class="btn btn-secondary">Volver</a>
+</form>

@@ -1,0 +1,69 @@
+@model InmobiliariaApp.Models.ViewModels.UsuarioRegistroViewModel 
+@{
+    Layout = "_AuthLayout"; // usa el layout sin navbar
+    ViewData["Title"] = "Registrarse";
+}
+
+<!-- Estilos exclusivos para el registro -->
+<link rel="stylesheet" href="~/css/register-uiverse.css" />
+
+<form asp-action="Register" method="post" enctype="multipart/form-data" class="form">
+    <p class="title">Registrarse</p>
+    <p class="message">Creá tu cuenta y obtené acceso completo.</p>
+
+    <div class="flex">
+        <label>
+            <input asp-for="Nombre" required placeholder="" type="text" class="input" />
+            <span>@Html.DisplayNameFor(m => m.Nombre)</span>
+        </label>
+
+        <label>
+            <input asp-for="Apellido" required placeholder="" type="text" class="input" />
+            <span>@Html.DisplayNameFor(m => m.Apellido)</span>
+        </label>
+    </div>
+
+    <label>
+        <input asp-for="Email" required placeholder="" type="email" class="input" />
+        <span>@Html.DisplayNameFor(m => m.Email)</span>
+    </label>
+
+    <label>
+        <input asp-for="Password" required placeholder="" type="password" class="input" />
+        <span>@Html.DisplayNameFor(m => m.Password)</span>
+    </label>
+
+    @* Si tu ViewModel tiene ConfirmPassword lo podés usar acá *@
+    @* 
+    <label>
+        <input asp-for="ConfirmPassword" required placeholder="" type="password" class="input" />
+        <span>Confirmar contraseña</span>
+    </label>
+    *@
+
+    <label>
+        <input type="file" name="avatar" class="input" />
+        <span>Avatar</span>
+    </label>
+
+    <button type="submit" class="submit">Registrar</button>
+
+    <p class="signin">
+        ¿Ya tenés una cuenta?
+        <a asp-controller="Auth" asp-action="Login">Iniciar sesión</a>
+    </p>
+
+    <!-- 🔹 Botón Volver al Home con icono (Bootstrap Icon) -->
+   <p class="signin">
+    <a asp-controller="Home" asp-action="Index" class="home-link" style="color:#1089D3; text-decoration:none;">
+        <img src="~/images/casa.png" alt="Home" style="width:20px; vertical-align:middle; margin-right:5px;" />
+        Volver al Home
+    </a>
+</p>
+
+
+</form>
+
+<div style="color:red">
+    @Html.ValidationSummary()
+</div>

@@ -1,0 +1,54 @@
+@model InmobiliariaApp.Models.Contrato
+
+@{
+    ViewData["Title"] = "Eliminar Contrato";
+}
+
+<h2 class="mb-4 text-danger">🗑️ Eliminar Contrato</h2>
+
+<div class="alert alert-warning">
+    <strong>⚠️ Atención:</strong>
+    @if (Model.FechaFin <= DateTime.Now)
+    {
+        <span>Este contrato ya finalizó y se marcará como <b>"Vencido"</b>.</span>
+    }
+    else
+    {
+        <span>Este contrato está vigente y será <b>marcado como "Finalizado"</b> (no se eliminará físicamente).</span>
+    }
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        <h4 class="card-title">Contrato #@Model.Id</h4>
+        <hr />
+
+        <dl class="row">
+            <dt class="col-sm-3">Inquilino</dt>
+            <dd class="col-sm-9">@Model.Inquilino?.Nombre</dd>
+
+            <dt class="col-sm-3">Inmueble</dt>
+            <dd class="col-sm-9">@Model.Inmueble?.Direccion</dd>
+
+            <dt class="col-sm-3">Fecha Inicio</dt>
+            <dd class="col-sm-9">@Model.FechaInicio.ToShortDateString()</dd>
+
+            <dt class="col-sm-3">Fecha Fin</dt>
+            <dd class="col-sm-9">@Model.FechaFin.ToShortDateString()</dd>
+
+            <dt class="col-sm-3">Monto Mensual</dt>
+            <dd class="col-sm-9">@Model.MontoMensual.ToString("C")</dd>
+
+            <dt class="col-sm-3">Estado</dt>
+            <dd class="col-sm-9">@Model.Estado</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" method="post" class="mt-3">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">
+        🗑️ Confirmar eliminación
+    </button>
+    <a asp-action="Index" class="btn btn-secondary">⬅️ Cancelar</a>
+</form>

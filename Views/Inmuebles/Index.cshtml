@@ -1,0 +1,101 @@
+@model List<InmobiliariaApp.Models.Inmueble> 
+@{
+    ViewData["Title"] = ViewData["Title"] ?? "Gestión de Inmuebles";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+@if (TempData["Mensaje"] != null)
+{
+    <div class="alert alert-success">@TempData["Mensaje"]</div>
+}
+
+<a asp-action="Edicion" asp-route-id="0" class="btn btn-success mb-3">Crear Nuevo Inmueble</a>
+<a asp-action="Disponibles" class="btn btn-info mb-3">Ver Disponibles</a>
+<a asp-action="Index" class="btn btn-secondary mb-3">Ver Todos</a>
+
+<!-- 🔍 Formulario de búsqueda -->
+<form asp-action="BuscarPorPropietario" method="get" class="d-flex align-items-center mb-3">
+    <input type="number" name="propietarioId" class="form-control me-2" placeholder="ID de propietario" required />
+    <button type="submit" class="btn btn-primary">🔍 Buscar por usuario</button>
+    <a asp-action="Index" class="btn btn-outline-secondary ms-2">Restablecer</a>
+</form>
+
+<!-- 🧩 Botones de filtro activo/inactivo cuando hay propietario -->
+@if (Context.Request.Query.ContainsKey("propietarioId"))
+{
+    var propietarioId = Context.Request.Query["propietarioId"];
+    <div class="mb-3">
+        <a asp-action="ActivosPorPropietario" asp-route-propietarioId="@propietarioId" class="btn btn-success me-2">Ver Activos</a>
+        <a asp-action="InactivosPorPropietario" asp-route-propietarioId="@propietarioId" class="btn btn-secondary">Ver Inactivos</a>
+    </div>
+}
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Dirección</th>
+            <th>Metros²</th>
+            <th>Tipo</th>
+            <th>Precio</th>
+            <th>Propietario</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Direccion</td>
+                <td>@item.MetrosCuadrados</td>
+                <td>@item.TipoNombre</td>
+                <td>@item.Precio.ToString("C")</td>
+                <td>@item.NombrePropietario</td>
+                <td>
+                    <a asp-action="Edicion" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
+                    <a asp-controller="Contratos" asp-action="PorInmueble" asp-route-id="@item.Id"
+                       class="btn btn-info btn-sm">📑 Ver Contratos</a>
+                    <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                            data-bs-target="#confirmModal" data-id="@item.Id" data-direccion="@item.Direccion">
+                        Eliminar
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Modal de confirmación -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Eliminar" method="post">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalLabel">Confirmar eliminación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    ¿Seguro que deseas eliminar el inmueble <strong id="inmuebleDireccion"></strong>?
+                    <input type="hidden" name="id" id="inmuebleId" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var modal = document.getElementById('confirmModal');
+        modal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget;
+            var id = button.getAttribute('data-id');
+            var direccion = button.getAttribute('data-direccion');
+            document.getElementById('inmuebleId').value = id;
+            document.getElementById('inmuebleDireccion').textContent = direccion;
+        });
+    </script>
+}

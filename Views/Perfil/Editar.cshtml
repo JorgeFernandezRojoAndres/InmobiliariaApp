@@ -1,0 +1,62 @@
+@model InmobiliariaApp.Models.Usuario
+@{
+    ViewData["Title"] = "Mi Perfil";
+}
+
+@{
+    var currentAvatar = string.IsNullOrWhiteSpace(Model.AvatarUrl)
+        ? "/avatars/default.png"
+        : Model.AvatarUrl;
+}
+
+<div class="container mt-4">
+    <h2>@ViewData["Title"]</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="Editar" method="post" enctype="multipart/form-data">
+        <input type="hidden" asp-for="Id" />
+
+        <div class="mb-3">
+            <label asp-for="Nombre" class="form-label"></label>
+            <input asp-for="Nombre" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Apellido" class="form-label"></label>
+            <input asp-for="Apellido" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" />
+        </div>
+
+        <div class="mb-3">
+            <label for="NuevaPassword" class="form-label">Nueva Contraseña</label>
+            <input type="password" name="NuevaPassword" class="form-control" />
+            <small class="text-muted">Dejar vacío para mantener la actual</small>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Avatar actual</label><br />
+            <img src="@currentAvatar" alt="Avatar" style="width:100px;height:100px;" class="rounded-circle border" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Subir nuevo avatar</label>
+            <input type="file" name="AvatarFile" class="form-control" />
+        </div>
+
+        <div class="form-check mb-3">
+            <input type="hidden" name="eliminarAvatar" value="false" />
+            <input type="checkbox" name="eliminarAvatar" value="true" class="form-check-input" id="eliminarAvatar" />
+            <label class="form-check-label" for="eliminarAvatar">Eliminar avatar y usar el default</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+    </form>
+</div>
