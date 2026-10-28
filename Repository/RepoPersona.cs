@@ -380,6 +380,27 @@ namespace InmobiliariaApp.Repository
 
             return lista;
         }
+        public string GetConnectionString()
+        {
+            return _connectionString;
+        }
+
+        // ✅ Ejecutar una sentencia SQL con parámetros anónimos
+        public void EjecutarSQL(string sql, Dictionary<string, object> parametros)
+        {
+            using var connection = new MySqlConnection(_connectionString);
+            using var command = new MySqlCommand(sql, connection);
+
+            // Cargar todos los parámetros del diccionario
+            foreach (var kvp in parametros)
+            {
+                command.Parameters.AddWithValue(kvp.Key, kvp.Value ?? DBNull.Value);
+            }
+
+            connection.Open();
+            command.ExecuteNonQuery();
+        }
+
         public dynamic? ObtenerInquilinoPorId(int idInquilino)
         {
             using var conn = new MySqlConnection(_connectionString);

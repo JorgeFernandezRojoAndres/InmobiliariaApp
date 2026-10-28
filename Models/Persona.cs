@@ -13,5 +13,8 @@ namespace InmobiliariaApp.Models
         // 🔹 Nuevas propiedades para autenticación y contacto
         public string? Clave { get; set; }       // Contraseña (encriptada o texto)
         public string? Telefono { get; set; }    // Teléfono del propietario o inquilino
+
+        // 🔑 Campo temporal para recuperación de contraseña
+        public string? TokenRecuperacion { get; set; } // Token asociado al enlace de recuperación
     }
 }

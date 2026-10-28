@@ -564,8 +564,8 @@ public IList<Contrato> ObtenerFinalizadosPorPropietario(int idPropietario)
         c.FechaFin < DateTime.Now ||
         c.Estado.Equals("Finalizado", StringComparison.OrdinalIgnoreCase) ||
         c.Estado.Equals("Vencido", StringComparison.OrdinalIgnoreCase) ||
-        c.Estado.Equals("Rescindido", StringComparison.OrdinalIgnoreCase) ||
-        c.Estado.Equals("Renovado", StringComparison.OrdinalIgnoreCase)
+        c.Estado.Equals("Rescindido", StringComparison.OrdinalIgnoreCase) 
+        
     ).ToList();
 
     return lista;

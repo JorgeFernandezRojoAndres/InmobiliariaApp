@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using InmobiliariaApp.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace InmobiliariaApp.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     public class InquilinosApiController : ControllerBase
     {
         private readonly RepoPersona _repo;

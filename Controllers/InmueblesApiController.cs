@@ -279,36 +279,77 @@ namespace InmobiliariaApp.Controllers.Api
             }
         }
 
-        // POST: /api/Inmuebles
+        // 🔹 POST: /api/Inmuebles
         [HttpPost]
         public IActionResult CrearInmueble([FromBody] Inmueble inmueble)
         {
             try
             {
+                // ✅ 1. Verificar token y obtener IdPropietario
                 var claim = User.Claims.FirstOrDefault(c => c.Type == "IdPropietario");
                 if (claim == null || !int.TryParse(claim.Value, out int idPropietario))
                     return Unauthorized(new { mensaje = "Token inválido o sin IdPropietario." });
 
+                // ✅ 2. Validar body
                 if (inmueble == null)
                     return BadRequest(new { mensaje = "El cuerpo del request está vacío o es inválido." });
 
-                inmueble.PropietarioId = idPropietario;
-                inmueble.Activo = true;
+                // ✅ 3. Validar campos esenciales
+                if (string.IsNullOrWhiteSpace(inmueble.Direccion))
+                    return BadRequest(new { mensaje = "La dirección es obligatoria." });
 
+                if (inmueble.Precio <= 0)
+                    return BadRequest(new { mensaje = "El precio debe ser mayor a 0." });
+
+                if (inmueble.MetrosCuadrados <= 0)
+                    return BadRequest(new { mensaje = "Los metros cuadrados deben ser mayores a 0." });
+
+                if (inmueble.TipoId <= 0)
+                    return BadRequest(new { mensaje = "Debe especificar un TipoId válido." });
+
+                // ✅ 4. Asignar propietario y estado inicial
+                inmueble.PropietarioId = idPropietario;
+                inmueble.Activo = false; // inactivo por defecto, coherente con Android
+
+                // 🧩 Debug antes de guardar: revisar datos recibidos
+                Console.WriteLine("========== DEBUG Inmueble recibido ==========");
+                Console.WriteLine($"Direccion: {inmueble.Direccion}");
+                Console.WriteLine($"TipoId: {inmueble.TipoId}");
+                Console.WriteLine($"PropietarioId: {inmueble.PropietarioId}");
+                Console.WriteLine($"Precio: {inmueble.Precio}");
+                Console.WriteLine($"MetrosCuadrados: {inmueble.MetrosCuadrados}");
+                Console.WriteLine($"Activo: {inmueble.Activo}");
+                Console.WriteLine("============================================");
+
+                // ✅ 5. Guardar en base
                 int idGenerado = _repoInmueble.Alta(inmueble);
+
+                // 🧩 Confirmación después del INSERT
+                Console.WriteLine($"[DEBUG Controller] Alta ejecutada -> Nuevo ID={idGenerado}, TipoId={inmueble.TipoId}");
+
                 if (idGenerado > 0)
                 {
                     inmueble.Id = idGenerado;
-                    return Ok(inmueble); // devuelve el creado con ID
+                    Console.WriteLine($"[DEBUG Controller] ✅ Inmueble creado correctamente (Id={inmueble.Id}, TipoId={inmueble.TipoId})");
+                    return Ok(inmueble); // devuelve el inmueble creado completo
                 }
 
+                // ❌ Si no se generó ID
                 return StatusCode(500, new { mensaje = "Error al guardar el inmueble." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { mensaje = "Error al crear el inmueble.", detalle = ex.Message });
+                Console.WriteLine($"[ERROR Controller] {ex}");
+                return StatusCode(500, new
+                {
+                    mensaje = "Error al crear el inmueble.",
+                    detalle = ex.Message
+                });
             }
         }
+
+
+
 
 
     }

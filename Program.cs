@@ -219,13 +219,21 @@ app.UseStaticFiles(new StaticFileOptions
 });
 app.Use(async (context, next) =>
 {
-    var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-    if (string.IsNullOrEmpty(authHeader))
+    var path = context.Request.Path.ToString();
+
+    // ❗ No mostrar el mensaje si es el endpoint de login
+    if (!path.Equals("/api/Propietarios/login", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine($"⚠️ Petición sin JWT → {context.Request.Method} {context.Request.Path}");
+        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
+        if (string.IsNullOrEmpty(authHeader))
+        {
+            Console.WriteLine($"⚠️ Petición sin JWT → {context.Request.Method} {context.Request.Path}");
+        }
     }
+
     await next();
 });
+
 
 app.UseAuthentication();
 app.UseAuthorization();

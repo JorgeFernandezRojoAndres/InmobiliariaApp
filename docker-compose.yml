@@ -1,0 +1,66 @@
+# ===============================
+# docker-compose.yml - InmobiliariaApp (producción en Ubuntu local)
+# ===============================
+# Servicio db : MySQL 8.0 (persistencia en el volumen mysql_data)
+# Servicio app : InmobiliariaApp .NET 9.0 (puerto 5027:5027)
+#
+# Si el host MySQL está en otra máquina, cambiar 127.0.0.1 por la IP del host
+# y asegurar el acceso al puerto 3306 desde el contenedor de la app.
+# ===============================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Base de datos MySQL 8.0
+  # ---------------------------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: inmobiliaria_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: mi_base_datos
+      MYSQL_USER: app_user
+      MYSQL_PASSWORD: app_pass123
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - app_net
+
+  # ---------------------------------------------------------------------------
+  # API ASP.NET Core 9.0 (port 5027)
+  # ---------------------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: inmobiliaria_app
+    restart: unless-stopped
+    ports:
+      - "5027:5027"
+    environment:
+      # La cadena de conexión se sobreescribe aquí. El host "db" resuelve al
+      # contenedor de MySQL gracias a la red común `app_net`.
+      ConnectionStrings__DefaultConnection: Server=db;Port=3306;Database=mi_base_datos;User=app_user;Password=app_pass123;SslMode=Preferred;AllowPublicKeyRetrieval=True;ConvertZeroDatetime=True
+      Jwt__Key: SuperClaveSecreta_Inmobiliaria_2025_Dev
+      Jwt__Issuer: InmobiliariaApp
+      Jwt__Audience: InmobiliariaMobile
+      Smtp__Host: smtp.gmail.com
+      Smtp__Port: 587
+      Smtp__User: andy46587@gmail.com
+      Smtp__Pass: ${SMTP_PASS:-}
+      ASPNETCORE_ENVIRONMENT: Production
+    depends_on:
+      - db
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
