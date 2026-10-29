@@ -44,7 +44,13 @@
 
     <div class="mb-3">
         <label asp-for="Estado" class="form-label">Estado</label>
-        <input asp-for="Estado" class="form-control" />
+        <select asp-for="Estado" class="form-control">
+            <option value="Vigente">Vigente</option>
+            <option value="Finalizado">Finalizado</option>
+            <option value="Vencido">Vencido</option>
+            <option value="Rescindido">Rescindido</option>
+            <option value="Cancelado">Cancelado</option>
+        </select>
         <span asp-validation-for="Estado" class="text-danger"></span>
     </div>
 

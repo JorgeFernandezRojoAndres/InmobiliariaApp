@@ -16,10 +16,11 @@ services:
   db:
     image: mysql:8.0
     container_name: inmobiliaria_mysql
-    restart: unless-stopped
+    restart: always
+    command: --lower-case-table-names=1
     environment:
-      MYSQL_ROOT_PASSWORD: root123
       MYSQL_DATABASE: mi_base_datos
+      MYSQL_ROOT_PASSWORD: rootpassword123
       MYSQL_USER: app_user
       MYSQL_PASSWORD: app_pass123
     ports:

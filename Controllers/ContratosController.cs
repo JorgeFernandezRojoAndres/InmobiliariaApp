@@ -25,7 +25,6 @@ namespace InmobiliariaApp.Controllers
         }
 
         [Authorize(Roles = "Propietario,Administrador,Empleado")]
-        [Authorize(Roles = "Propietario,Administrador,Empleado")]
         public IActionResult Index(DateTime? inicio, DateTime? fin, int? propietarioId)
         {
             IList<Contrato> contratos;
@@ -196,6 +195,13 @@ namespace InmobiliariaApp.Controllers
         public IActionResult Edit(int id, Contrato contrato)
         {
             if (id != contrato.Id) return NotFound();
+
+            // 🔹 Validar que el estado sea uno de los valores permitidos
+            var estadosValidos = new[] { "Vigente", "Finalizado", "Vencido", "Rescindido", "Cancelado" };
+            if (!estadosValidos.Any(e => e.Equals(contrato.Estado, StringComparison.OrdinalIgnoreCase)))
+            {
+                ModelState.AddModelError("Estado", $"El estado seleccionado no es válido. Valores permitidos: {string.Join(", ", estadosValidos)}");
+            }
 
             if (ModelState.IsValid)
             {
