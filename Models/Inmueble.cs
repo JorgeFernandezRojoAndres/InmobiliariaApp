@@ -21,6 +21,9 @@ namespace InmobiliariaApp.Models
         // 🔹 Nombre del propietario (JOIN con propietarios)
         public string NombrePropietario { get; set; } = string.Empty;
 
+        // 🏢 Inmobiliaria (tenant) a la que pertenece el inmueble
+        public int? InmobiliariaId { get; set; }
+
         // 🔹 Prop calculada para mostrar en combos/dropdowns
         public string Descripcion =>
     $"{Direccion} - {TipoNombre} (${Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)}) - {NombrePropietario}";

@@ -64,8 +64,10 @@ CREATE TABLE personas (
   Clave VARCHAR(255) DEFAULT NULL,
   Telefono VARCHAR(50) DEFAULT NULL,
   AvatarUrl VARCHAR(255) DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
   PRIMARY KEY (ID),
-  UNIQUE KEY DNI_UNIQUE (DNI)
+  UNIQUE KEY DNI_UNIQUE (DNI),
+  KEY personas_inmobiliaria_idx (InmobiliariaId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -96,8 +98,10 @@ CREATE TABLE inmuebles (
   Activo TINYINT(1) NOT NULL DEFAULT '1',
   TipoId INT DEFAULT NULL,
   ImagenUrl VARCHAR(255) DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
   PRIMARY KEY (ID),
   KEY inmuebles_propietario_idx (PropietarioID),
+  KEY inmuebles_inmobiliaria_idx (InmobiliariaId),
   KEY inmuebles_tipo_idx (TipoId),
   CONSTRAINT fk_inmuebles_propietario
     FOREIGN KEY (PropietarioID) REFERENCES personas (ID)
@@ -119,8 +123,10 @@ CREATE TABLE contratos (
   Estado VARCHAR(50) DEFAULT 'Vigente',
   CreadoPor INT NOT NULL,
   TerminadoPor INT DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
   PRIMARY KEY (Id),
   KEY contrato_inquilino_idx (InquilinoID),
+  KEY contratos_inmobiliaria_idx (InmobiliariaId),
   KEY contrato_inmueble_idx (InmuebleID),
   CONSTRAINT fk_contrato_inmueble
     FOREIGN KEY (InmuebleID) REFERENCES inmuebles (ID)
@@ -165,8 +171,10 @@ CREATE TABLE pagos (
   Importe DECIMAL(15,2) NOT NULL,
   CreadoPor INT NOT NULL,
   AnuladoPor INT DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
   PRIMARY KEY (Id),
   KEY pagos_contrato_idx (ContratoId),
+  KEY pagos_inmobiliaria_idx (InmobiliariaId),
   KEY pagos_creado_idx (CreadoPor),
   KEY pagos_anulado_idx (AnuladoPor),
   CONSTRAINT fk_pagos_creado
@@ -188,8 +196,10 @@ CREATE TABLE usuarios (
   Apellido VARCHAR(100) NOT NULL,
   Rol VARCHAR(50) NOT NULL,
   AvatarUrl VARCHAR(255) DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
   PRIMARY KEY (Id),
-  UNIQUE KEY Email_UNIQUE (Email)
+  UNIQUE KEY Email_UNIQUE (Email),
+  KEY usuarios_inmobiliaria_idx (InmobiliariaId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -298,3 +308,16 @@ INSERT INTO usuarios (Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl)
 (12, 'kokoq@hotmail.com', '$2a$11$laYhDvsMmuS3Gs3pcS..eehfeUFmlyMfs4/h5gCWdXbJuwbJw/Hh.', 'koko', 'raul', 'Empleado', '/avatars/default.png'),
 (13, 'lolo@hotmail.com', '$2a$11$pzyym8E06yPVy.EkB3rHO.HpKVXWNrV7GWXM3EvdYHmIEt2Ks5.iq', 'lolo', 'fernandez', 'Empleado', '/avatars/default.png'),
 (14, 'bauti@gmail,com', '$2a$11$eh51qZdrQlgxWo0x6YDU4O.xp072B/10v6BtooleY4hYx0XDEABLu', 'simon', 'bauti', 'Empleado', '/avatars/default.png');
+
+-- ============================================================
+-- Multi-inmobiliaria: TODO lo de arriba (personas, inmuebles,
+-- contratos, pagos y usuarios de prueba) pertenece a la
+-- inmobiliaria 1, es decir, a la inmobiliaria demo.
+-- Un usuario que se registre desde la app no ve ninguno de
+-- estos datos: queda como dueño de una inmobiliaria vacía.
+-- ============================================================
+UPDATE personas SET InmobiliariaId = 1;
+UPDATE inmuebles SET InmobiliariaId = 1;
+UPDATE contratos SET InmobiliariaId = 1;
+UPDATE pagos SET InmobiliariaId = 1;
+UPDATE usuarios SET InmobiliariaId = 1;

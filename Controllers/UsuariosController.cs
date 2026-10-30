@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Helpers;
 using InmobiliariaApp.Repository;
 
 namespace InmobiliariaApp.Controllers
@@ -9,10 +10,12 @@ namespace InmobiliariaApp.Controllers
     public class UsuariosController : Controller
     {
         private readonly IRepoUsuario _repoUsuario;   // ✅ Usar la interfaz
+        private readonly IInmobiliariaContext _inmobiliaria;
 
-        public UsuariosController(IRepoUsuario repoUsuario)  // ✅ Recibir la interfaz
+        public UsuariosController(IRepoUsuario repoUsuario, IInmobiliariaContext inmobiliaria)  // ✅ Recibir la interfaz
         {
             _repoUsuario = repoUsuario;
+            _inmobiliaria = inmobiliaria;
         }
 
         public IActionResult Index()
@@ -60,6 +63,10 @@ namespace InmobiliariaApp.Controllers
     // ✅ Hashear password antes de guardar
     usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(usuario.PasswordHash);
 
+    // 🏢 El empleado siempre entra a la inmobiliaria del administrador que lo crea
+    //    (se pisa cualquier InmobiliariaId que venga del formulario).
+    usuario.InmobiliariaId = _inmobiliaria.InmobiliariaId;
+
     _repoUsuario.Crear(usuario);
 
     TempData["Success"] = "Usuario creado con éxito.";
@@ -71,6 +78,8 @@ namespace InmobiliariaApp.Controllers
         {
             var usuario = _repoUsuario.ObtenerPorId(id);
             if (usuario == null) return NotFound();
+            // 🔒 Solo se gestionan usuarios de la propia inmobiliaria
+            if (usuario.InmobiliariaId != _inmobiliaria.InmobiliariaId) return NotFound();
             return View(usuario);
         }
 
@@ -82,6 +91,8 @@ namespace InmobiliariaApp.Controllers
 
             var usuarioExistente = _repoUsuario.ObtenerPorId(id);
             if (usuarioExistente == null) return NotFound();
+            // 🔒 Solo se gestionan usuarios de la propia inmobiliaria
+            if (usuarioExistente.InmobiliariaId != _inmobiliaria.InmobiliariaId) return NotFound();
 
             // ✅ Contraseña: mantener la actual si no se ingresa nueva
             if (!string.IsNullOrWhiteSpace(NuevaPassword))
@@ -122,6 +133,8 @@ namespace InmobiliariaApp.Controllers
         {
             var usuario = _repoUsuario.ObtenerPorId(id);
             if (usuario == null) return NotFound();
+            // 🔒 Solo se gestionan usuarios de la propia inmobiliaria
+            if (usuario.InmobiliariaId != _inmobiliaria.InmobiliariaId) return NotFound();
             return View(usuario);
         }
 
@@ -129,6 +142,9 @@ namespace InmobiliariaApp.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult EliminarConfirmado(int id)
         {
+            var usuario = _repoUsuario.ObtenerPorId(id);
+            if (usuario == null || usuario.InmobiliariaId != _inmobiliaria.InmobiliariaId) return NotFound();
+
             _repoUsuario.Eliminar(id);
             TempData["Success"] = "Usuario eliminado.";
             return RedirectToAction(nameof(Index));

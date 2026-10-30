@@ -29,6 +29,8 @@ builder.Services.AddControllersWithViews();
 // -------------------------
 // 🧩 Inyección de dependencias
 // -------------------------
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IInmobiliariaContext, InmobiliariaContext>();
 builder.Services.AddScoped<RepoInmueble>();
 builder.Services.AddScoped<RepoPersona>();
 builder.Services.AddScoped<IRepoContrato, RepoContrato>();

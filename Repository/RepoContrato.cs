@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using MySql.Data.MySqlClient;
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Helpers;
 using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
@@ -9,12 +10,21 @@ namespace InmobiliariaApp.Repository
     public class RepoContrato : IRepoContrato
     {
         private readonly string _connectionString;
+        private readonly IInmobiliariaContext? _inmobiliaria;
 
         // 🔹 Ahora recibe IConfiguration en el constructor
-        public RepoContrato(IConfiguration configuration)
+        public RepoContrato(IConfiguration configuration, IInmobiliariaContext? inmobiliaria = null)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+            _inmobiliaria = inmobiliaria;
+        }
+
+        // 🔒 Filtro de aislamiento: null = sin filtro (API móvil / sin sesión web)
+        private void AgregarFiltroInmobiliaria(MySqlCommand cmd)
+        {
+            cmd.Parameters.AddWithValue("@inmobiliariaId",
+                (object?)_inmobiliaria?.InmobiliariaId ?? DBNull.Value);
         }
 
         public IList<Contrato> ObtenerPorInmueble(int inmuebleId)
@@ -32,11 +42,13 @@ namespace InmobiliariaApp.Repository
             INNER JOIN inmuebles i ON c.InmuebleID = i.ID
             INNER JOIN tipos_inmuebles t ON i.TipoId = t.Id
             INNER JOIN personas p ON c.InquilinoID = p.ID
-            WHERE i.ID = @inmuebleId";
+            WHERE i.ID = @inmuebleId
+              AND (@inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId)";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@inmuebleId", inmuebleId);
+                    AgregarFiltroInmobiliaria(command);
                     connection.Open();
                     var reader = command.ExecuteReader();
                     while (reader.Read())
@@ -86,9 +98,11 @@ namespace InmobiliariaApp.Repository
         INNER JOIN inmuebles i ON c.InmuebleId = i.Id
         INNER JOIN tipos_inmuebles ti ON i.TipoId = ti.Id
         INNER JOIN personas p ON i.PropietarioId = p.Id
-        INNER JOIN personas inq ON c.InquilinoId = inq.Id;";
+        INNER JOIN personas inq ON c.InquilinoId = inq.Id
+        WHERE @inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId;";
 
             using var command = new MySqlCommand(sql, connection);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
 
             using var reader = command.ExecuteReader();
@@ -151,11 +165,13 @@ namespace InmobiliariaApp.Repository
             INNER JOIN personas p ON c.InquilinoID = p.ID
             LEFT JOIN usuarios u1 ON c.CreadoPor = u1.Id
             LEFT JOIN usuarios u2 ON c.TerminadoPor = u2.Id
-            WHERE c.Id = @id";
+            WHERE c.Id = @id
+              AND (@inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId)";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@id", id);
+                    AgregarFiltroInmobiliaria(command);
                     connection.Open();
                     var reader = command.ExecuteReader();
                     if (reader.Read())
@@ -229,9 +245,10 @@ namespace InmobiliariaApp.Repository
             {
                 var sql = @"
             INSERT INTO contratos 
-                (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor)
+                (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor, InmobiliariaId)
             VALUES 
-                (@inquilino, @inmueble, @inicio, @fin, @monto, @estado, @creadoPor);
+                (@inquilino, @inmueble, @inicio, @fin, @monto, @estado, @creadoPor,
+                 COALESCE(@inmobiliariaId, (SELECT InmobiliariaId FROM inmuebles WHERE ID = @inmueble)));
             SELECT LAST_INSERT_ID();";
 
                 using (var command = new MySqlCommand(sql, connection))
@@ -243,6 +260,7 @@ namespace InmobiliariaApp.Repository
                     command.Parameters.AddWithValue("@monto", contrato.MontoMensual);
                     command.Parameters.AddWithValue("@estado", contrato.Estado);
                     command.Parameters.AddWithValue("@creadoPor", contrato.CreadoPor);
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     var res = Convert.ToInt32(command.ExecuteScalar());
@@ -273,12 +291,14 @@ namespace InmobiliariaApp.Repository
                    (@inicio BETWEEN c.FechaInicio AND c.FechaFin)
                 OR (@fin BETWEEN c.FechaInicio AND c.FechaFin)
                 OR (c.FechaInicio BETWEEN @inicio AND @fin)
-              );";
+              )
+              AND (@inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId);";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@inicio", inicio);
                     command.Parameters.AddWithValue("@fin", fin);
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     var reader = command.ExecuteReader();
@@ -344,7 +364,7 @@ namespace InmobiliariaApp.Repository
                 var sql = @"UPDATE contratos 
                             SET InquilinoID=@inquilino, InmuebleID=@inmueble, FechaInicio=@inicio, FechaFin=@fin,
                                 MontoMensual=@monto, Estado=@estado
-                            WHERE Id=@id";
+                            WHERE Id=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@inquilino", contrato.IdInquilino);
@@ -354,6 +374,7 @@ namespace InmobiliariaApp.Repository
                     command.Parameters.AddWithValue("@monto", contrato.MontoMensual);
                     command.Parameters.AddWithValue("@estado", contrato.Estado);
                     command.Parameters.AddWithValue("@id", contrato.Id);
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     res = command.ExecuteNonQuery();
@@ -386,12 +407,13 @@ namespace InmobiliariaApp.Repository
             {
                 var sql = @"UPDATE contratos 
                     SET Estado = 'Finalizado', TerminadoPor = @usuario 
-                    WHERE Id = @idContrato";
+                    WHERE Id = @idContrato AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@usuario", idUsuario);
                     command.Parameters.AddWithValue("@idContrato", idContrato);
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     res = command.ExecuteNonQuery();
@@ -410,11 +432,13 @@ namespace InmobiliariaApp.Repository
             SELECT p.Id, p.ContratoId, p.FechaPago, p.Detalle, p.Importe
             FROM pagos p
             WHERE p.ContratoId = @contratoId
+              AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)
             ORDER BY p.FechaPago DESC;";
 
                 using (var command = new MySqlCommand(sql, connection))
                 {
                     command.Parameters.AddWithValue("@contratoId", contratoId);
+                    AgregarFiltroInmobiliaria(command);
                     connection.Open();
 
                     using (var reader = command.ExecuteReader())
@@ -680,9 +704,10 @@ public bool ExisteContratoVigenteParaInmueble(int idInmueble, int idContratoActu
     {
         var sql2 = @"
             INSERT INTO contratos 
-                (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor, ContratoOriginalId)
+                (InquilinoID, InmuebleID, FechaInicio, FechaFin, MontoMensual, Estado, CreadoPor, ContratoOriginalId, InmobiliariaId)
             VALUES 
-                (@inquilino, @inmueble, @inicio, @fin, @monto, 'Vigente', @propietario, @original);
+                (@inquilino, @inmueble, @inicio, @fin, @monto, 'Vigente', @propietario, @original,
+                 COALESCE(@inmobiliariaId, (SELECT InmobiliariaId FROM contratos WHERE Id = @original)));
             SELECT LAST_INSERT_ID();";
 
         using (var cmd = new MySqlCommand(sql2, connection2))
@@ -694,6 +719,7 @@ public bool ExisteContratoVigenteParaInmueble(int idInmueble, int idContratoActu
             cmd.Parameters.AddWithValue("@monto", nuevoMonto);
             cmd.Parameters.AddWithValue("@propietario", idPropietario);
             cmd.Parameters.AddWithValue("@original", idContratoOriginal);
+            AgregarFiltroInmobiliaria(cmd);
 
             connection2.Open();
             nuevoId = Convert.ToInt32(cmd.ExecuteScalar());

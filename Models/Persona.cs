@@ -16,5 +16,8 @@ namespace InmobiliariaApp.Models
 
         // 🔑 Campo temporal para recuperación de contraseña
         public string? TokenRecuperacion { get; set; } // Token asociado al enlace de recuperación
+
+        // 🏢 Inmobiliaria (tenant) a la que pertenece la persona
+        public int? InmobiliariaId { get; set; }
     }
 }

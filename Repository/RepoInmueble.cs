@@ -1,5 +1,6 @@
     using MySqlConnector;
     using InmobiliariaApp.Models;
+    using InmobiliariaApp.Helpers;
     using Microsoft.Extensions.Configuration;
 
 
@@ -8,12 +9,21 @@
         public class RepoInmueble
         {
             private readonly string _connectionString;
+            private readonly IInmobiliariaContext? _inmobiliaria;
 
             // Recibe IConfiguration para leer la cadena desde appsettings.json
-            public RepoInmueble(IConfiguration configuration)
+            public RepoInmueble(IConfiguration configuration, IInmobiliariaContext? inmobiliaria = null)
             {
                 _connectionString = configuration.GetConnectionString("DefaultConnection")
                     ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+                _inmobiliaria = inmobiliaria;
+            }
+
+            // 🔒 Filtro de aislamiento: null = sin filtro (API móvil / sin sesión web)
+            private void AgregarFiltroInmobiliaria(MySqlCommand cmd)
+            {
+                cmd.Parameters.AddWithValue("@inmobiliariaId",
+                    (object?)_inmobiliaria?.InmobiliariaId ?? DBNull.Value);
             }
 
             // 🔹 ALTA 
@@ -21,8 +31,10 @@
             {
                 using var connection = new MySqlConnection(_connectionString);
                 const string sql = @"INSERT INTO Inmuebles 
-                            (Direccion, TipoId, MetrosCuadrados, Precio, PropietarioID, Activo)
-                            VALUES (@dir, @tipoId, @m2, @precio, @prop, @activo);
+                            (Direccion, TipoId, MetrosCuadrados, Precio, PropietarioID, Activo, InmobiliariaId)
+                            VALUES (@dir, @tipoId, @m2, @precio, @prop, @activo,
+                                    COALESCE(@inmobiliariaId,
+                                             (SELECT InmobiliariaId FROM personas WHERE ID = @prop)));
                             SELECT LAST_INSERT_ID();";
 
                 using var command = new MySqlCommand(sql, connection);
@@ -34,6 +46,7 @@
                     Convert.ToDecimal(i.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture)));
                 command.Parameters.AddWithValue("@prop", i.PropietarioId);
                 command.Parameters.AddWithValue("@activo", i.Activo);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 return Convert.ToInt32(command.ExecuteScalar());
@@ -52,10 +65,11 @@
             FROM Inmuebles i
             JOIN Personas p ON p.ID = i.PropietarioID
             JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
-            WHERE i.ID = @id";
+            WHERE i.ID = @id AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId)";
 
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@id", id);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 using var reader = command.ExecuteReader();
@@ -94,11 +108,14 @@
             JOIN Personas p ON i.PropietarioID = p.ID
             JOIN Tipos_Inmuebles t ON i.TipoId = t.Id";
 
-                if (!incluirInactivos)
-                    sql += " WHERE i.Activo = 1";
+            if (!incluirInactivos)
+                sql += " WHERE i.Activo = 1 AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId)";
+            else
+                sql += " WHERE @inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId";
 
-                using var command = new MySqlCommand(sql, connection);
-                connection.Open();
+            using var command = new MySqlCommand(sql, connection);
+            AgregarFiltroInmobiliaria(command);
+            connection.Open();
                 using var reader = command.ExecuteReader();
 
                 while (reader.Read())
@@ -139,9 +156,11 @@
                 WHERE c.InmuebleID = i.ID
                     AND UPPER(c.Estado) = 'VIGENTE'
                     AND DATE(NOW()) BETWEEN DATE(c.FechaInicio) AND DATE(c.FechaFin)
-            );";
+            )
+            AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId);";
 
                 using var command = new MySqlCommand(sql, connection);
+                AgregarFiltroInmobiliaria(command);
                 connection.Open();
                 using var reader = command.ExecuteReader();
 
@@ -188,11 +207,12 @@
                     OR (@fin BETWEEN c.FechaInicio AND c.FechaFin)
                     OR (c.FechaInicio BETWEEN @inicio AND @fin)
                     )
-            );";
+            AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId);";
 
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@inicio", inicio);
                 command.Parameters.AddWithValue("@fin", fin);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 using var reader = command.ExecuteReader();
@@ -218,10 +238,11 @@
             public int ActualizarEstado(int id, bool activo)
             {
                 using var connection = new MySqlConnection(_connectionString);
-                const string sql = "UPDATE Inmuebles SET Activo = @activo WHERE ID = @id";
+                const string sql = "UPDATE Inmuebles SET Activo = @activo WHERE ID = @id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@activo", activo);
                 command.Parameters.AddWithValue("@id", id);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 int filas = command.ExecuteNonQuery();
@@ -245,10 +266,12 @@
         FROM Inmuebles i
         JOIN Personas p ON i.PropietarioID = p.ID
         JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
-        WHERE i.PropietarioID = @propId"; // ✅ mostrar activos e inactivos
+        WHERE i.PropietarioID = @propId
+          AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId)"; // ✅ mostrar activos e inactivos
 
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@propId", propietarioId);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 using var reader = command.ExecuteReader();
@@ -295,11 +318,13 @@
             FROM Inmuebles i
             JOIN Personas p ON i.PropietarioID = p.ID
             JOIN Tipos_Inmuebles t ON i.TipoId = t.Id
-            WHERE i.PropietarioID = @propId AND i.Activo = @activo";
+            WHERE i.PropietarioID = @propId AND i.Activo = @activo
+              AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId)";
 
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@propId", propietarioId);
                 command.Parameters.AddWithValue("@activo", activo);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 using var reader = command.ExecuteReader();
@@ -351,10 +376,12 @@
             JOIN Contratos c ON c.InmuebleID = i.ID
             WHERE i.PropietarioID = @propId
             AND UPPER(c.Estado) = 'VIGENTE'
-            AND CURDATE() BETWEEN DATE(c.FechaInicio) AND DATE(c.FechaFin);";
+            AND CURDATE() BETWEEN DATE(c.FechaInicio) AND DATE(c.FechaFin)
+            AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId);";
 
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@propId", propietarioId);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 using var reader = command.ExecuteReader();
@@ -402,7 +429,7 @@
                     const string sql = @"UPDATE Inmuebles 
                     SET Direccion=@dir, TipoId=@tipoId, MetrosCuadrados=@m2, Precio=@precio, 
                         PropietarioID=@prop, Activo=@activo
-                    WHERE ID=@id";
+                    WHERE ID=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
 
                     using var command = new MySqlCommand(sql, connection);
                     command.Parameters.AddWithValue("@dir", i.Direccion ?? (object)DBNull.Value);
@@ -414,6 +441,7 @@
                     command.Parameters.AddWithValue("@prop", i.PropietarioId);
                     command.Parameters.AddWithValue("@activo", i.Activo);
                     command.Parameters.AddWithValue("@id", i.Id);
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     int filas = command.ExecuteNonQuery();
@@ -437,10 +465,11 @@
             public int GuardarImagen(int idInmueble, string ruta)
             {
                 using var connection = new MySqlConnection(_connectionString);
-                const string sql = "UPDATE Inmuebles SET ImagenUrl = @ruta WHERE ID = @id";
+                const string sql = "UPDATE Inmuebles SET ImagenUrl = @ruta WHERE ID = @id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@ruta", ruta);
                 command.Parameters.AddWithValue("@id", idInmueble);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 return command.ExecuteNonQuery();
@@ -484,7 +513,7 @@
                     if (!string.IsNullOrEmpty(i.ImagenUrl))
                         sql += ", ImagenUrl=@img";
 
-                    sql += " WHERE ID=@id;";
+                    sql += " WHERE ID=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId);";
 
                     using var command = new MySqlCommand(sql, connection);
 
@@ -501,6 +530,8 @@
 
                     if (!string.IsNullOrEmpty(i.ImagenUrl))
                         command.Parameters.AddWithValue("@img", i.ImagenUrl);
+
+                    AgregarFiltroInmobiliaria(command);
 
                     connection.Open();
                     int filas = command.ExecuteNonQuery();
@@ -526,9 +557,10 @@
             public void BajaLogica(int id)
             {
                 using var connection = new MySqlConnection(_connectionString);
-                const string sql = "UPDATE Inmuebles SET Activo = 0 WHERE ID = @id";
+                const string sql = "UPDATE Inmuebles SET Activo = 0 WHERE ID = @id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@id", id);
+                AgregarFiltroInmobiliaria(command);
 
                 connection.Open();
                 command.ExecuteNonQuery();

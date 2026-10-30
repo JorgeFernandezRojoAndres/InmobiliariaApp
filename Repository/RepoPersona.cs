@@ -1,6 +1,7 @@
 using MySqlConnector;
 using System.Collections.Generic;
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Helpers;
 using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
@@ -8,11 +9,20 @@ namespace InmobiliariaApp.Repository
     public class RepoPersona
     {
         private readonly string _connectionString;
+        private readonly IInmobiliariaContext? _inmobiliaria;
 
-        public RepoPersona(IConfiguration configuration)
+        public RepoPersona(IConfiguration configuration, IInmobiliariaContext? inmobiliaria = null)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+            _inmobiliaria = inmobiliaria;
+        }
+
+        // 🔒 Filtro de aislamiento: null = sin filtro (API móvil / sin sesión web)
+        private void AgregarFiltroInmobiliaria(MySqlCommand cmd)
+        {
+            cmd.Parameters.AddWithValue("@inmobiliariaId",
+                (object?)_inmobiliaria?.InmobiliariaId ?? DBNull.Value);
         }
 
         // 🔹 Traer todas las personas con roles concatenados
@@ -27,9 +37,11 @@ namespace InmobiliariaApp.Repository
                 FROM Personas p
                 LEFT JOIN persona_roles pr ON p.ID = pr.persona_id
                 LEFT JOIN roles r ON pr.rol_id = r.id
+                WHERE @inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId
                 GROUP BY p.ID, p.Nombre, p.Apellido, p.DNI, p.Email";
 
             using var command = new MySqlCommand(sql, connection);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             using var reader = command.ExecuteReader();
 
@@ -55,9 +67,10 @@ namespace InmobiliariaApp.Repository
         public Persona? ObtenerPorId(int id)
         {
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email FROM Personas WHERE ID=@id";
+            const string sql = "SELECT ID, Nombre, Apellido, DNI, Email FROM Personas WHERE ID=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@id", id);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             using var reader = command.ExecuteReader();
             if (reader.Read())
@@ -94,13 +107,14 @@ namespace InmobiliariaApp.Repository
             // 2️⃣ Insertar si no existe
             if (personaId == 0)
             {
-                const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email) 
-                                     VALUES (@nombre, @apellido, @dni, @correo)";
+                const string sql = @"INSERT INTO Personas (Nombre, Apellido, DNI, Email, InmobiliariaId)
+                                     VALUES (@nombre, @apellido, @dni, @correo, @inmobiliariaId)";
                 using var command = new MySqlCommand(sql, connection);
                 command.Parameters.AddWithValue("@nombre", p.Nombre);
                 command.Parameters.AddWithValue("@apellido", p.Apellido);
                 command.Parameters.AddWithValue("@dni", p.Documento);
                 command.Parameters.AddWithValue("@correo", p.Email);
+                AgregarFiltroInmobiliaria(command);
                 command.ExecuteNonQuery();
                 personaId = (int)command.LastInsertedId;
             }
@@ -144,7 +158,7 @@ namespace InmobiliariaApp.Repository
                             Telefono=@telefono,
                             AvatarUrl=@avatar,
                             Clave=@clave
-                         WHERE ID=@id";
+                         WHERE ID=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
 
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@nombre", p.Nombre);
@@ -155,6 +169,7 @@ namespace InmobiliariaApp.Repository
             command.Parameters.AddWithValue("@avatar", p.AvatarUrl ?? (object)DBNull.Value);
             command.Parameters.AddWithValue("@clave", p.Clave ?? (object)DBNull.Value); // ✅ agregado
             command.Parameters.AddWithValue("@id", p.Id);
+            AgregarFiltroInmobiliaria(command);
 
             connection.Open();
             command.ExecuteNonQuery();
@@ -165,9 +180,10 @@ namespace InmobiliariaApp.Repository
         public void Eliminar(int id)
         {
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "DELETE FROM Personas WHERE ID=@id";
+            const string sql = "DELETE FROM Personas WHERE ID=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@id", id);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             command.ExecuteNonQuery();
         }
@@ -196,8 +212,10 @@ namespace InmobiliariaApp.Repository
                                  FROM Personas p
                                  JOIN persona_roles pr ON p.ID = pr.persona_id
                                  JOIN roles r ON pr.rol_id = r.id
-                                 WHERE r.nombre = 'Propietario'";
+                                 WHERE r.nombre = 'Propietario'
+                                   AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)";
             using var command = new MySqlCommand(sql, connection);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             using var reader = command.ExecuteReader();
 
@@ -223,8 +241,10 @@ namespace InmobiliariaApp.Repository
                                  FROM Personas p
                                  JOIN persona_roles pr ON p.ID = pr.persona_id
                                  JOIN roles r ON pr.rol_id = r.id
-                                 WHERE r.nombre = 'Inquilino'";
+                                 WHERE r.nombre = 'Inquilino'
+                                   AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)";
             using var command = new MySqlCommand(sql, connection);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             using var reader = command.ExecuteReader();
 
@@ -247,9 +267,10 @@ namespace InmobiliariaApp.Repository
         {
             Persona? persona = null;
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = "SELECT * FROM personas WHERE Email = @Email";
+            const string sql = "SELECT * FROM personas WHERE Email = @Email AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@Email", email);
+            AgregarFiltroInmobiliaria(command);
             connection.Open();
             using var reader = command.ExecuteReader();
 
@@ -349,11 +370,13 @@ namespace InmobiliariaApp.Repository
         JOIN roles r ON pr.rol_id = r.id AND r.nombre = 'Inquilino'
         JOIN contratos c ON c.InquilinoID = p.ID AND c.Estado = 'Vigente'
         JOIN inmuebles i ON i.ID = c.InmuebleID
-        WHERE i.PropietarioID = @propietarioId;
+        WHERE i.PropietarioID = @propietarioId
+          AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId);
     ";
 
             using var command = new MySqlCommand(sql, connection);
             command.Parameters.AddWithValue("@propietarioId", propietarioId);
+            AgregarFiltroInmobiliaria(command);
 
             connection.Open();
             using var reader = command.ExecuteReader();
@@ -422,10 +445,12 @@ namespace InmobiliariaApp.Repository
         JOIN contratos c ON c.InquilinoID = p.ID
         JOIN inmuebles inm ON inm.ID = c.InmuebleID
         WHERE p.ID = @id
+          AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)
         LIMIT 1;";
 
             using var cmd = new MySqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@id", idInquilino);
+            AgregarFiltroInmobiliaria(cmd);
 
             conn.Open();
             using var reader = cmd.ExecuteReader();

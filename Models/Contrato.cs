@@ -31,6 +31,9 @@ namespace InmobiliariaApp.Models
         public decimal? MontoMulta { get; set; }            // Multa calculada por rescisión anticipada
         public int? ContratoOriginalId { get; set; }        // Referencia al contrato anterior si es una renovación
 
+        // 🏢 Inmobiliaria (tenant) a la que pertenece el contrato
+        public int? InmobiliariaId { get; set; }
+
         // 🔹 Propiedad calculada para mostrar en dropdowns y vistas
         public string Descripcion
         {

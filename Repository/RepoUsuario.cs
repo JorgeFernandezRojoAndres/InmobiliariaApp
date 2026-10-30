@@ -1,4 +1,5 @@
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Helpers;
 using MySql.Data.MySqlClient;
 using Microsoft.Extensions.Configuration;
 
@@ -7,19 +8,29 @@ namespace InmobiliariaApp.Repository
     public class RepoUsuario : IRepoUsuario
     {
         private readonly string _connectionString;
+        private readonly IInmobiliariaContext? _inmobiliaria;
 
         // ✅ Ahora también recibe IConfiguration
-        public RepoUsuario(IConfiguration configuration)
+        public RepoUsuario(IConfiguration configuration, IInmobiliariaContext? inmobiliaria = null)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+            _inmobiliaria = inmobiliaria;
         }
+
+        // 🔒 Filtro de aislamiento: null = sin filtro (API móvil / sin sesión web)
+        private void AgregarFiltroInmobiliaria(MySqlCommand cmd)
+        {
+            cmd.Parameters.AddWithValue("@inmobiliariaId",
+                (object?)_inmobiliaria?.InmobiliariaId ?? DBNull.Value);
+        }
+
         public void Crear(Usuario usuario)
         {
             using var connection = new MySqlConnection(_connectionString);
             connection.Open();
-            var sql = "INSERT INTO Usuarios (Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl) " +
-                      "VALUES (@Email, @PasswordHash, @Nombre, @Apellido, @Rol, @AvatarUrl)";
+            var sql = "INSERT INTO Usuarios (Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl, InmobiliariaId) " +
+                      "VALUES (@Email, @PasswordHash, @Nombre, @Apellido, @Rol, @AvatarUrl, @InmobiliariaId)";
             using var cmd = new MySqlCommand(sql, connection);
             cmd.Parameters.AddWithValue("@Email", usuario.Email);
             cmd.Parameters.AddWithValue("@PasswordHash", usuario.PasswordHash);
@@ -31,8 +42,22 @@ namespace InmobiliariaApp.Repository
                 : usuario.AvatarUrl;
 
             cmd.Parameters.AddWithValue("@AvatarUrl", avatarValue);
+            cmd.Parameters.AddWithValue("@InmobiliariaId",
+                (object?)usuario.InmobiliariaId ?? DBNull.Value);
 
             cmd.ExecuteNonQuery();
+            var nuevoId = (int)cmd.LastInsertedId;
+            usuario.Id = nuevoId;
+
+            // ✅ Si no se indicó inmobiliaria, el usuario es el dueño de la suya propia.
+            if (usuario.InmobiliariaId == null)
+            {
+                using var cmdUpdate = new MySqlCommand(
+                    "UPDATE Usuarios SET InmobiliariaId = Id WHERE Id = @Id AND InmobiliariaId IS NULL", connection);
+                cmdUpdate.Parameters.AddWithValue("@Id", nuevoId);
+                cmdUpdate.ExecuteNonQuery();
+                usuario.InmobiliariaId = nuevoId;
+            }
         }
 
         // ✅ Ahora implementado correctamente
@@ -41,7 +66,9 @@ namespace InmobiliariaApp.Repository
             using var connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl " +
+            // ⚠️ Sin filtro por inmobiliaria a propósito: el login debe poder encontrar
+            //    al usuario sin importar de qué inmobiliaria sea.
+            var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl, InmobiliariaId " +
                       "FROM Usuarios WHERE LOWER(Email) = LOWER(@Email) LIMIT 1";
 
             using var cmd = new MySqlCommand(sql, connection);
@@ -60,7 +87,10 @@ namespace InmobiliariaApp.Repository
                     Rol = Enum.TryParse<RolUsuario>(reader.GetString("Rol"), true, out var rol) ? rol : RolUsuario.Empleado,
                     AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
                         ? "/avatars/default.png"
-                        : reader.GetString("AvatarUrl")
+                        : reader.GetString("AvatarUrl"),
+                    InmobiliariaId = reader.IsDBNull(reader.GetOrdinal("InmobiliariaId"))
+                        ? (int?)null
+                        : reader.GetInt32("InmobiliariaId")
                 };
             }
 
@@ -73,7 +103,9 @@ namespace InmobiliariaApp.Repository
             using var connection = new MySqlConnection(_connectionString);
             connection.Open();
 
-            var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl " +
+            // ⚠️ Sin filtro por inmobiliaria a propósito: lo usa InmobiliariaContext para
+            //    resolver la inmobiliaria del usuario (evitaría recursión) y el login.
+            var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl, InmobiliariaId " +
                       "FROM Usuarios WHERE Id = @Id";
 
             using var cmd = new MySqlCommand(sql, connection);
@@ -92,7 +124,10 @@ namespace InmobiliariaApp.Repository
                     Rol = Enum.Parse<RolUsuario>(reader.GetString("Rol")),
                     AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
                         ? "/avatars/default.png"   // ✅ usa default si está en NULL
-                        : reader.GetString(reader.GetOrdinal("AvatarUrl"))
+                        : reader.GetString(reader.GetOrdinal("AvatarUrl")),
+                    InmobiliariaId = reader.IsDBNull(reader.GetOrdinal("InmobiliariaId"))
+                        ? (int?)null
+                        : reader.GetInt32("InmobiliariaId")
                 };
             }
 
@@ -106,8 +141,11 @@ namespace InmobiliariaApp.Repository
     using var connection = new MySqlConnection(_connectionString);
     connection.Open();
 
-    var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl FROM Usuarios";
+    // 🔒 Solo los usuarios de la inmobiliaria del que pide la lista
+    var sql = "SELECT Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl, InmobiliariaId " +
+              "FROM Usuarios WHERE @inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId";
     using var cmd = new MySqlCommand(sql, connection);
+    AgregarFiltroInmobiliaria(cmd);
 
     using var reader = cmd.ExecuteReader();
     while (reader.Read())
@@ -122,7 +160,10 @@ namespace InmobiliariaApp.Repository
             Rol = Enum.Parse<RolUsuario>(reader.GetString("Rol")),
             AvatarUrl = reader.IsDBNull(reader.GetOrdinal("AvatarUrl"))
                 ? "/avatars/default.png"   // ✅ mismo fix que en ObtenerPorId
-                : reader.GetString(reader.GetOrdinal("AvatarUrl"))
+                : reader.GetString(reader.GetOrdinal("AvatarUrl")),
+            InmobiliariaId = reader.IsDBNull(reader.GetOrdinal("InmobiliariaId"))
+                ? (int?)null
+                : reader.GetInt32("InmobiliariaId")
         });
     }
 

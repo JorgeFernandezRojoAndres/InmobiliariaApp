@@ -11,5 +11,9 @@ namespace InmobiliariaApp.Models
 
         // No Required, porque se genera automáticamente
         public string? AvatarUrl { get; set; }
+
+        // 🏢 Inmobiliaria (tenant) a la que pertenece el usuario.
+        // El dueño tiene su propio Id; los empleados comparten el Id del dueño.
+        public int? InmobiliariaId { get; set; }
     }
 }

@@ -19,5 +19,8 @@ namespace InmobiliariaApp.Models
 
         public int? AnuladoPor { get; set; }               // FK al Usuario que lo anuló
         public Usuario? UsuarioAnulador { get; set; }      // Navegación
+
+        // 🏢 Inmobiliaria (tenant) a la que pertenece el pago
+        public int? InmobiliariaId { get; set; }
     }
 }

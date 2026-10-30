@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Repository;
 using Microsoft.AspNetCore.Authorization;
 
 namespace InmobiliariaApp.Controllers
@@ -7,20 +8,25 @@ namespace InmobiliariaApp.Controllers
     [Authorize]
     public class HomeController : Controller
     {
-        private static List<Propiedad> _propiedades = new List<Propiedad>
+        private readonly RepoInmueble _repoInmueble;
+
+        public HomeController(RepoInmueble repoInmueble)
         {
-            new Propiedad { Id = 1, Direccion = "Calle Falsa 123", Precio = 150000, Dormitorios = 3, Descripcion = "Amplia casa en zona céntrica." },
-            new Propiedad { Id = 2, Direccion = "Avenida Siempreviva 742", Precio = 200000, Dormitorios = 4, Descripcion = "Chalet con jardín y pileta." },
-            new Propiedad { Id = 3, Direccion = "Pasaje Secreto 1", Precio = 90000, Dormitorios = 2, Descripcion = "Departamento acogedor, ideal para parejas." }
-        };
+            _repoInmueble = repoInmueble;
+        }
 
         public IActionResult Index()
         {
+            // 🏢 Inmuebles REALES de la inmobiliaria del usuario logueado.
+            //    RepoInmueble ya filtra por inmobiliaria: una inmobiliaria nueva
+            //    no ve los datos de prueba ni los de otras inmobiliarias.
+            var propiedades = _repoInmueble.Obtener();
+
             // Leer la cookie
             string? ultimaPropiedadVistaId = Request.Cookies["ultimaPropiedadVista"];
             if (!string.IsNullOrEmpty(ultimaPropiedadVistaId) && int.TryParse(ultimaPropiedadVistaId, out int idPropiedad))
             {
-                var propiedadFavorita = _propiedades.FirstOrDefault(p => p.Id == idPropiedad);
+                var propiedadFavorita = propiedades.FirstOrDefault(p => p.Id == idPropiedad);
                 if (propiedadFavorita != null)
                 {
                     ViewBag.MensajeCookie = $"Tu última preferencia es: {propiedadFavorita.Direccion}.";
@@ -35,7 +41,7 @@ namespace InmobiliariaApp.Controllers
                 ViewBag.MensajeCookie = "No hemos registrado tu preferencia de propiedad aún.";
             }
 
-            return View(_propiedades);
+            return View(propiedades);
         }
 
         [HttpPost]

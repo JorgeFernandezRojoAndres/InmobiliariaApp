@@ -1,5 +1,6 @@
 using MySql.Data.MySqlClient;
 using InmobiliariaApp.Models;
+using InmobiliariaApp.Helpers;
 using Microsoft.Extensions.Configuration;
 
 namespace InmobiliariaApp.Repository
@@ -7,12 +8,21 @@ namespace InmobiliariaApp.Repository
     public class RepoPago : IRepoPago
     {
         private readonly string _connectionString;
+        private readonly IInmobiliariaContext? _inmobiliaria;
 
         // 🔹 Ahora se inyecta IConfiguration para leer del appsettings.json
-        public RepoPago(IConfiguration configuration)
+        public RepoPago(IConfiguration configuration, IInmobiliariaContext? inmobiliaria = null)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection")
                 ?? throw new InvalidOperationException("No se encontró la cadena de conexión 'DefaultConnection'.");
+            _inmobiliaria = inmobiliaria;
+        }
+
+        // 🔒 Filtro de aislamiento: null = sin filtro (API móvil / sin sesión web)
+        private void AgregarFiltroInmobiliaria(MySqlCommand cmd)
+        {
+            cmd.Parameters.AddWithValue("@inmobiliariaId",
+                (object?)_inmobiliaria?.InmobiliariaId ?? DBNull.Value);
         }
 
         public List<Pago> ObtenerTodos()
@@ -26,8 +36,10 @@ namespace InmobiliariaApp.Repository
                               ' a ', DATE_FORMAT(c.FechaFin,'%d/%m/%Y'),
                               ' ($', c.MontoMensual, ')') AS ContratoDescripcion
                 FROM pagos p
-                INNER JOIN contratos c ON p.ContratoId = c.Id";
+                INNER JOIN contratos c ON p.ContratoId = c.Id
+                WHERE @inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId";
             using var cmd = new MySqlCommand(sql, conn);
+            AgregarFiltroInmobiliaria(cmd);
             conn.Open();
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
@@ -56,10 +68,12 @@ namespace InmobiliariaApp.Repository
                       ' ($', c.MontoMensual, ')') AS ContratoDescripcion
         FROM pagos p
         INNER JOIN contratos c ON p.ContratoId = c.Id
-        WHERE p.ContratoId=@contratoId";
+        WHERE p.ContratoId=@contratoId
+          AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)";
     
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@contratoId", contratoId);
+    AgregarFiltroInmobiliaria(cmd);
     conn.Open();
     using var reader = cmd.ExecuteReader();
     while (reader.Read())
@@ -93,10 +107,12 @@ namespace InmobiliariaApp.Repository
         INNER JOIN contratos c ON p.ContratoId = c.Id
         LEFT JOIN usuarios u1 ON p.CreadoPor = u1.Id
         LEFT JOIN usuarios u2 ON p.AnuladoPor = u2.Id
-        WHERE p.Id=@id";
+        WHERE p.Id=@id
+          AND (@inmobiliariaId IS NULL OR p.InmobiliariaId = @inmobiliariaId)";
     
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@id", id);
+    AgregarFiltroInmobiliaria(cmd);
     conn.Open();
     using var reader = cmd.ExecuteReader();
     if (reader.Read())
@@ -134,8 +150,9 @@ namespace InmobiliariaApp.Repository
     {
         using var conn = new MySqlConnection(_connectionString);
         const string sql = @"
-            INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor)
-            VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor);
+            INSERT INTO pagos (ContratoId, FechaPago, Detalle, Importe, CreadoPor, InmobiliariaId)
+            VALUES (@contratoId, @fechaPago, @detalle, @importe, @creadoPor,
+                    COALESCE(@inmobiliariaId, (SELECT InmobiliariaId FROM contratos WHERE Id = @contratoId)));
             SELECT LAST_INSERT_ID();";
 
         using var cmd = new MySqlCommand(sql, conn);
@@ -144,6 +161,7 @@ namespace InmobiliariaApp.Repository
         cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
         cmd.Parameters.AddWithValue("@importe", pago.Importe);
         cmd.Parameters.AddWithValue("@creadoPor", pago.CreadoPor);
+        AgregarFiltroInmobiliaria(cmd);
 
         conn.Open();
         var result = cmd.ExecuteScalar(); // ✅ devuelve el ID generado, no bloquea
@@ -167,13 +185,15 @@ namespace InmobiliariaApp.Repository
 {
     using var conn = new MySqlConnection(_connectionString); // ✅ centralizado
     var sql = @"UPDATE pagos SET ContratoId=@contratoId, FechaPago=@fechaPago, 
-                Detalle=@detalle, Importe=@importe WHERE Id=@id";
+                Detalle=@detalle, Importe=@importe 
+                WHERE Id=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@id", pago.Id);
     cmd.Parameters.AddWithValue("@contratoId", pago.ContratoId);
     cmd.Parameters.AddWithValue("@fechaPago", pago.FechaPago);
     cmd.Parameters.AddWithValue("@detalle", pago.Detalle ?? (object)DBNull.Value);
     cmd.Parameters.AddWithValue("@importe", pago.Importe);
+    AgregarFiltroInmobiliaria(cmd);
     conn.Open();
     return cmd.ExecuteNonQuery();
 }
@@ -183,10 +203,11 @@ public int Baja(int id, int anuladoPorId)
     using var conn = new MySqlConnection(_connectionString); // ✅ centralizado
     var sql = @"UPDATE pagos 
                 SET AnuladoPorId=@anuladoPorId 
-                WHERE Id=@id";
+                WHERE Id=@id AND (@inmobiliariaId IS NULL OR InmobiliariaId = @inmobiliariaId)";
     using var cmd = new MySqlCommand(sql, conn);
     cmd.Parameters.AddWithValue("@id", id);
     cmd.Parameters.AddWithValue("@anuladoPorId", anuladoPorId);
+    AgregarFiltroInmobiliaria(cmd);
     conn.Open();
     return cmd.ExecuteNonQuery();
 }

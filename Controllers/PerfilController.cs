@@ -110,10 +110,15 @@ namespace InmobiliariaApp.Controllers
             // 🔹 Regenerar claims para que se actualicen en la sesión actual
             var claims = new List<Claim>
             {
+                new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
                 new Claim(ClaimTypes.Name, usuario.Email),
                 new Claim(ClaimTypes.Role, usuario.Rol.ToString()),
                 new Claim("FullName", usuario.Nombre + " " + usuario.Apellido),
-                new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png")
+                new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png"),
+                // 🏢 Inmobiliaria: sin este claim el aislamiento de datos se perdería
+                //    al actualizar el perfil (además del NameIdentifier que faltaba).
+                new Claim(InmobiliariaApp.Helpers.InmobiliariaContext.ClaimType,
+                          (usuario.InmobiliariaId ?? usuario.Id).ToString())
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

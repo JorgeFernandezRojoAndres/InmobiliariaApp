@@ -1,4 +1,4 @@
-﻿@model List<InmobiliariaApp.Models.Propiedad>
+﻿@model List<InmobiliariaApp.Models.Inmueble>
 
 @{
     ViewData["Title"] = "Listado de Propiedades";
@@ -20,13 +20,20 @@
     <p class="alert alert-warning">@TempData["MensajeBorrado"]</p>
 }
 
+@if (!Model.Any())
+{
+    <p class="alert alert-secondary">Todavía no hay propiedades cargadas en esta inmobiliaria.</p>
+}
+else
+{
 <table class="table table-striped">
     <thead>
         <tr>
             <th>Dirección</th>
+            <th>Tipo</th>
             <th>Precio</th>
-            <th>Dormitorios</th>
-            <th>Descripción</th>
+            <th>m²</th>
+            <th>Propietario</th>
             <th>Acciones</th>
         </tr>
     </thead>
@@ -35,9 +42,10 @@
         {
             <tr>
                 <td>@propiedad.Direccion</td>
+                <td>@propiedad.TipoNombre</td>
                 <td>@propiedad.Precio.ToString("C")</td>
-                <td>@propiedad.Dormitorios</td>
-                <td>@propiedad.Descripcion</td>
+                <td>@propiedad.MetrosCuadrados</td>
+                <td>@propiedad.NombrePropietario</td>
                 <td>
                     <a asp-action="MarcarFavorita" asp-route-id="@propiedad.Id" class="btn btn-sm btn-primary">
                         Marcar como Favorita
@@ -47,3 +55,4 @@
         }
     </tbody>
 </table>
+}

@@ -70,8 +70,12 @@ namespace InmobiliariaApp.Controllers
                     PasswordHash = passwordHash,
                     Nombre = model.Nombre,
                     Apellido = model.Apellido,
-                    Rol = RolUsuario.Empleado,
-                    AvatarUrl = avatarPath
+                    // 👑 Quien se registra solo queda como dueño/administrador de su inmobiliaria
+                    Rol = RolUsuario.Administrador,
+                    AvatarUrl = avatarPath,
+                    // 🏠 Inmobiliaria propia: RepoUsuario.Crear la deja en su propio Id si es null,
+                    //    así el nuevo usuario arranca con datos ajenos visibles.
+                    InmobiliariaId = null
                 };
 
                 _repoUsuario.Crear(usuario);
@@ -110,10 +114,12 @@ public async Task<IActionResult> Login(LoginViewModel model)
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, usuario.Id.ToString()), // ✅ agregado
-            new Claim(ClaimTypes.Name, usuario.Email),
-            new Claim(ClaimTypes.Role, usuario.Rol.ToString()),
-            new Claim("FullName", usuario.Nombre + " " + usuario.Apellido),
-            new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png")
+            new Claim(ClaimTypes.Name, usuario.Email),                new Claim(ClaimTypes.Role, usuario.Rol.ToString()),
+                new Claim("FullName", usuario.Nombre + " " + usuario.Apellido),
+                new Claim("AvatarUrl", usuario.AvatarUrl ?? "/avatars/default.png"),
+                // 🏢 Inmobiliaria del usuario: la usan los repos para aislar los datos
+                new Claim(InmobiliariaApp.Helpers.InmobiliariaContext.ClaimType,
+                           (usuario.InmobiliariaId ?? usuario.Id).ToString())
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
