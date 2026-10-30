@@ -33,7 +33,7 @@ namespace InmobiliariaApp.Repository
 
             const string sql = @"
                 SELECT p.ID, p.Nombre, p.Apellido, p.DNI, p.Email,
-                       GROUP_CONCAT(r.nombre SEPARATOR ', ') AS Roles
+                       GROUP_CONCAT(r.nombre ORDER BY r.id SEPARATOR ', ') AS Roles
                 FROM Personas p
                 LEFT JOIN persona_roles pr ON p.ID = pr.persona_id
                 LEFT JOIN roles r ON pr.rol_id = r.id
@@ -54,7 +54,12 @@ namespace InmobiliariaApp.Repository
                     Apellido = reader.GetString("Apellido"),
                     Documento = reader.GetString("DNI"),
                     Email = reader.GetString("Email"),
-                    // ⚠️ Eliminamos "Tipo" — ahora usamos Roles concatenados si existen
+                    // ✅ La columna "Tipo" de la vista lee esto: roles concatenados
+                    //    (ej.: "Propietario", "Inquilino" o "Inquilino, Propietario").
+                    //    Sin roles => "-" para que la celda no quede vacía.
+                    Tipo = reader.IsDBNull(reader.GetOrdinal("Roles"))
+                        ? "-"
+                        : reader.GetString("Roles"),
                     Clave = "",
                     Telefono = "",
                     AvatarUrl = null
