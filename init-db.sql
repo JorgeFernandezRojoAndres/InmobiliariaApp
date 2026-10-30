@@ -161,6 +161,26 @@ END;;
 DELIMITER ;
 
 -- ============================================================
+-- Tabla: usuarios
+-- (tiene que ir ANTES de pagos: pagos tiene dos foreign key
+--  hacia usuarios y MySQL falla con "Failed to open the
+--  referenced table 'usuarios'" si la crea después)
+-- ============================================================
+CREATE TABLE usuarios (
+  Id INT NOT NULL AUTO_INCREMENT,
+  Email VARCHAR(255) NOT NULL,
+  PasswordHash VARCHAR(255) NOT NULL,
+  Nombre VARCHAR(100) NOT NULL,
+  Apellido VARCHAR(100) NOT NULL,
+  Rol VARCHAR(50) NOT NULL,
+  AvatarUrl VARCHAR(255) DEFAULT NULL,
+  InmobiliariaId INT DEFAULT NULL,
+  PRIMARY KEY (Id),
+  UNIQUE KEY Email_UNIQUE (Email),
+  KEY usuarios_inmobiliaria_idx (InmobiliariaId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
 -- Tabla: pagos
 -- ============================================================
 CREATE TABLE pagos (
@@ -183,23 +203,6 @@ CREATE TABLE pagos (
     FOREIGN KEY (AnuladoPor) REFERENCES usuarios (Id),
   CONSTRAINT fk_pagos_contrato
     FOREIGN KEY (ContratoId) REFERENCES contratos (Id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- ============================================================
--- Tabla: usuarios
--- ============================================================
-CREATE TABLE usuarios (
-  Id INT NOT NULL AUTO_INCREMENT,
-  Email VARCHAR(255) NOT NULL,
-  PasswordHash VARCHAR(255) NOT NULL,
-  Nombre VARCHAR(100) NOT NULL,
-  Apellido VARCHAR(100) NOT NULL,
-  Rol VARCHAR(50) NOT NULL,
-  AvatarUrl VARCHAR(255) DEFAULT NULL,
-  InmobiliariaId INT DEFAULT NULL,
-  PRIMARY KEY (Id),
-  UNIQUE KEY Email_UNIQUE (Email),
-  KEY usuarios_inmobiliaria_idx (InmobiliariaId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================================
@@ -290,10 +293,6 @@ INSERT INTO contratos (Id, InquilinoID, InmuebleID, FechaInicio, FechaFin, Monto
 (23, 28, 41, '2024-01-01', '2024-12-31', 75000.00, 'Finalizado', 2, 4),
 (24, 48, 36, '2025-10-03', '2026-10-03', 150000.00, 'Vigente', 0, NULL);
 
--- Pagos
-INSERT INTO pagos (Id, ContratoId, FechaPago, Detalle, Importe, CreadoPor, AnuladoPor) VALUES
-(2, 2, '2025-09-12', 'Cuota mensual Septiembre 2025+deposito', 520000.00, 1, 4);
-
 -- Usuarios (administrador + empleados)
 INSERT INTO usuarios (Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl) VALUES
 (1, 'admin@inmobiliaria.com', '$2a$11$OoG18IaDQueH2njOkep4MOVQO5FwERgdv8RC5Ap.XS8M0KLvqRyB.', 'Mario roberto', 'Administrador', 'Administrador', '/avatars/816948a3-9e8b-49c5-9794-7dbaf690ff74.jpg'),
@@ -308,6 +307,11 @@ INSERT INTO usuarios (Id, Email, PasswordHash, Nombre, Apellido, Rol, AvatarUrl)
 (12, 'kokoq@hotmail.com', '$2a$11$laYhDvsMmuS3Gs3pcS..eehfeUFmlyMfs4/h5gCWdXbJuwbJw/Hh.', 'koko', 'raul', 'Empleado', '/avatars/default.png'),
 (13, 'lolo@hotmail.com', '$2a$11$pzyym8E06yPVy.EkB3rHO.HpKVXWNrV7GWXM3EvdYHmIEt2Ks5.iq', 'lolo', 'fernandez', 'Empleado', '/avatars/default.png'),
 (14, 'bauti@gmail,com', '$2a$11$eh51qZdrQlgxWo0x6YDU4O.xp072B/10v6BtooleY4hYx0XDEABLu', 'simon', 'bauti', 'Empleado', '/avatars/default.png');
+
+-- Pagos (va DESPUÉS de usuarios: CreadoPor y AnuladoPor son FK hacia usuarios,
+-- si se inserta antes MySQL falla con ERROR 1452)
+INSERT INTO pagos (Id, ContratoId, FechaPago, Detalle, Importe, CreadoPor, AnuladoPor) VALUES
+(2, 2, '2025-09-12', 'Cuota mensual Septiembre 2025+deposito', 520000.00, 1, 4);
 
 -- ============================================================
 -- Multi-inmobiliaria: TODO lo de arriba (personas, inmuebles,

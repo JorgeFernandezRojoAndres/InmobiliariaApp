@@ -204,9 +204,9 @@
                     AND UPPER(c.Estado) = 'VIGENTE'
                     AND (
                         (@inicio BETWEEN c.FechaInicio AND c.FechaFin)
-                    OR (@fin BETWEEN c.FechaInicio AND c.FechaFin)
-                    OR (c.FechaInicio BETWEEN @inicio AND @fin)
-                    )
+                    OR (@fin BETWEEN c.FechaInicio AND c.FechaFin)                        OR (c.FechaInicio BETWEEN @inicio AND @fin)
+                        )
+            )
             AND (@inmobiliariaId IS NULL OR i.InmobiliariaId = @inmobiliariaId);";
 
                 using var command = new MySqlCommand(sql, connection);
