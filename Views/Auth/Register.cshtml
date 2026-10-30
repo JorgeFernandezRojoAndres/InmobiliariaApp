@@ -7,29 +7,29 @@
 <!-- Estilos exclusivos para el registro -->
 <link rel="stylesheet" href="~/css/register-uiverse.css" />
 
-<form asp-action="Register" method="post" enctype="multipart/form-data" class="form">
+<form asp-action="Register" method="post" enctype="multipart/form-data" class="form" autocomplete="off">
     <p class="title">Registrarse</p>
     <p class="message">Creá tu cuenta y obtené acceso completo.</p>
 
     <div class="flex">
         <label>
-            <input asp-for="Nombre" required placeholder="" type="text" class="input" />
+            <input asp-for="Nombre" required placeholder="" type="text" class="input" autocomplete="off" />
             <span>@Html.DisplayNameFor(m => m.Nombre)</span>
         </label>
 
         <label>
-            <input asp-for="Apellido" required placeholder="" type="text" class="input" />
+            <input asp-for="Apellido" required placeholder="" type="text" class="input" autocomplete="off" />
             <span>@Html.DisplayNameFor(m => m.Apellido)</span>
         </label>
     </div>
 
     <label>
-        <input asp-for="Email" required placeholder="" type="email" class="input" />
+        <input asp-for="Email" required placeholder="" type="email" class="input" autocomplete="off" />
         <span>@Html.DisplayNameFor(m => m.Email)</span>
     </label>
 
     <label>
-        <input asp-for="Password" required placeholder="" type="password" class="input" />
+        <input asp-for="Password" required placeholder="" type="password" class="input" autocomplete="new-password" />
         <span>@Html.DisplayNameFor(m => m.Password)</span>
     </label>
 

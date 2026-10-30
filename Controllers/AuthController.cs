@@ -33,6 +33,13 @@ namespace InmobiliariaApp.Controllers
         {
             if (ModelState.IsValid)
             {
+                // ✅ El email debe ser único: no se permite registrar uno existente
+                if (_repoUsuario.ObtenerPorEmail(model.Email) != null)
+                {
+                    ModelState.AddModelError("Email", "El email ya está registrado.");
+                    return View(model);
+                }
+
                 // Hash seguro de contraseña
                 var passwordHash = BCrypt.Net.BCrypt.HashPassword(model.Password);
 
