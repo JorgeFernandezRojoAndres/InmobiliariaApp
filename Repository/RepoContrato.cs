@@ -88,10 +88,10 @@ namespace InmobiliariaApp.Repository
         }
 
         public IList<Contrato> ObtenerConTexto(string texto)
-        {
-            var lista = new List<Contrato>();
-            using var connection = new MySqlConnection(_connectionString);
-            string sql = @"
+{
+    var lista = new List<Contrato>();
+    using var connection = new MySqlConnection(_connectionString);
+    string sql = @"
         SELECT 
             c.Id, c.InquilinoId, c.InmuebleId, c.FechaInicio, c.FechaFin, 
             c.MontoMensual, c.Estado,
@@ -104,83 +104,82 @@ namespace InmobiliariaApp.Repository
         INNER JOIN tipos_inmuebles ti ON i.TipoId = ti.Id
         INNER JOIN personas p ON i.PropietarioId = p.Id
         INNER JOIN personas inq ON c.InquilinoId = inq.Id
-        WHERE (@inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId)";
+        WHERE (1=1)";
 
-            var parameters = new List<MySqlParameter>
-            {
-                new MySqlParameter("@inmobiliariaId", DBNull.Value)
-            };
+    var parameters = new List<MySqlParameter>();
 
-            if (!string.IsNullOrWhiteSpace(texto))
-            {
-                sql += " AND ("
-                     + "LOWER(i.Direccion) LIKE LOWER(@buscarDireccion) OR "
-                     + "LOWER(inq.Nombre) LIKE LOWER(@buscarInquilino) OR "
-                     + "LOWER(inq.Apellido) LIKE LOWER(@buscarInquilino) OR "
-                     + "LOWER(p.Nombre) LIKE LOWER(@buscarPropietario) OR "
-                     + "LOWER(p.Apellido) LIKE LOWER(@buscarPropietario)"
-                     + ")";
+    if (!string.IsNullOrWhiteSpace(texto))
+    {
+        sql += " AND ("
+             + "LOWER(i.Direccion) LIKE LOWER(@buscarDireccion) OR "
+             + "LOWER(inq.Nombre) LIKE LOWER(@buscarInquilino) OR "
+             + "LOWER(inq.Apellido) LIKE LOWER(@buscarInquilino) OR "
+             + "LOWER(p.Nombre) LIKE LOWER(@buscarPropietario) OR "
+             + "LOWER(p.Apellido) LIKE LOWER(@buscarPropietario)"
+             + ")";
 
-                string like = $"%{texto.ToLower().Trim()}%";
+        string like = $"%{texto.ToLower().Trim()}%";
 
-                parameters.AddRange(new MySqlParameter[]
-                {
-                    new MySqlParameter("@buscarDireccion", like),
-                    new MySqlParameter("@buscarInquilino", like),
-                    new MySqlParameter("@buscarPropietario", like)
-                });
-            }
+        parameters.AddRange(new MySqlParameter[]
+        {
+            new MySqlParameter("@buscarDireccion", like),
+            new MySqlParameter("@buscarInquilino", like),
+            new MySqlParameter("@buscarPropietario", like)
+        });
+    }
 
-            sql += " ORDER BY c.FechaInicio DESC;";
+    sql += " ORDER BY c.FechaInicio DESC;";
 
-            using var command = new MySqlCommand(sql, connection);
-            AgregarFiltroInmobiliaria(command);
+    using var command = new MySqlCommand(sql, connection);
+    
+    // ✅ Se delega completamente en el filtro de la inmobiliaria para evitar duplicar el parámetro @inmobiliariaId
+    AgregarFiltroInmobiliaria(command);
 
-            foreach (var p in parameters)
-            {
-                command.Parameters.Add(p);
-            }
+    foreach (var p in parameters)
+    {
+        command.Parameters.Add(p);
+    }
 
-            connection.Open();
+    connection.Open();
 
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                var inmueble = new Inmueble
-                {
-                    Id = reader.GetInt32("InmuebleId"),
-                    Direccion = reader.GetString("Direccion"),
-                    PropietarioId = reader.GetInt32("PropietarioId"),
-                    Precio = reader.GetDecimal("Precio"),
-                    TipoNombre = reader.GetString("TipoNombre"),
-                    NombrePropietario = $"{reader.GetString("NombrePropietario")} {reader.GetString("ApellidoPropietario")}"
-                };
+    using var reader = command.ExecuteReader();
+    while (reader.Read())
+    {
+        var inmueble = new Inmueble
+        {
+            Id = reader.GetInt32("InmuebleId"),
+            Direccion = reader.GetString("Direccion"),
+            PropietarioId = reader.GetInt32("PropietarioId"),
+            Precio = reader.GetDecimal("Precio"),
+            TipoNombre = reader.GetString("TipoNombre"),
+            NombrePropietario = $"{reader.GetString("NombrePropietario")} {reader.GetString("ApellidoPropietario")}"
+        };
 
-                var inquilino = new Inquilino
-                {
-                    Id = reader.GetInt32("IdInquilino"),
-                    Nombre = reader.GetString("NombreInquilino"),
-                    Apellido = reader.GetString("ApellidoInquilino")
-                };
+        var inquilino = new Inquilino
+        {
+            Id = reader.GetInt32("IdInquilino"),
+            Nombre = reader.GetString("NombreInquilino"),
+            Apellido = reader.GetString("ApellidoInquilino")
+        };
 
-                var contrato = new Contrato
-                {
-                    Id = reader.GetInt32("Id"),
-                    IdInquilino = reader.GetInt32("InquilinoId"),
-                    IdInmueble = reader.GetInt32("InmuebleId"),
-                    FechaInicio = reader.GetDateTime("FechaInicio"),
-                    FechaFin = reader.GetDateTime("FechaFin"),
-                    MontoMensual = reader.GetDecimal("MontoMensual"),
-                    Estado = reader.GetString("Estado"),
-                    Inmueble = inmueble,
-                    Inquilino = inquilino
-                };
+        var contrato = new Contrato
+        {
+            Id = reader.GetInt32("Id"),
+            IdInquilino = reader.GetInt32("InquilinoId"),
+            IdInmueble = reader.GetInt32("InmuebleId"),
+            FechaInicio = reader.GetDateTime("FechaInicio"),
+            FechaFin = reader.GetDateTime("FechaFin"),
+            MontoMensual = reader.GetDecimal("MontoMensual"),
+            Estado = reader.GetString("Estado"),
+            Inmueble = inmueble,
+            Inquilino = inquilino
+        };
 
-                lista.Add(contrato);
-            }
+        lista.Add(contrato);
+    }
 
-            return lista;
-        }
+    return lista;
+}
 
 
         public Contrato? ObtenerPorId(int id)
