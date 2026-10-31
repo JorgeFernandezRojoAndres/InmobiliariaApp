@@ -32,6 +32,10 @@ body.layout-fondo-linea {
     position: relative;
     min-height: 100vh;
     background-color: var(--bg-soft);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
 }
 
 /* ===== Capa decorativa sobre cada módulo ===== */
@@ -62,14 +66,11 @@ body.layout-fondo-linea {
     overflow: hidden;
 }
 
-/* ===== Módulos con su imagen específica ===== */
+/* ===== Módulos con su imagen específica aplicada al fondo general ===== */
 
 /* Auth: Login / Register */
-.auth-module {
+body.auth-module.layout-fondo-linea {
     background-image: var(--img-login);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .auth-module .contenedor-con-fondo-linea {
@@ -78,11 +79,8 @@ body.layout-fondo-linea {
 }
 
 /* Usuarios */
-.usuarios-module {
+body.usuarios-module.layout-fondo-linea {
     background-image: var(--img-usuarios);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .usuarios-module .contenedor-con-fondo-linea {
@@ -91,11 +89,8 @@ body.layout-fondo-linea {
 }
 
 /* Contratos */
-.contratos-module {
+body.contratos-module.layout-fondo-linea {
     background-image: var(--img-contratos);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .contratos-module .contenedor-con-fondo-linea {
@@ -104,11 +99,8 @@ body.layout-fondo-linea {
 }
 
 /* Inmuebles */
-.inmuebles-module {
+body.inmuebles-module.layout-fondo-linea {
     background-image: var(--img-inmuebles);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .inmuebles-module .contenedor-con-fondo-linea {
@@ -117,11 +109,8 @@ body.layout-fondo-linea {
 }
 
 /* Inquilinos */
-.inquilinos-module {
+body.inquilinos-module.layout-fondo-linea {
     background-image: var(--img-inquilinos);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .inquilinos-module .contenedor-con-fondo-linea {
@@ -130,11 +119,8 @@ body.layout-fondo-linea {
 }
 
 /* Pagos */
-.pagos-module {
+body.pagos-module.layout-fondo-linea {
     background-image: var(--img-pagos);
-    background-size: cover;
-    background-position: center center;
-    background-repeat: no-repeat;
 }
 
 .pagos-module .contenedor-con-fondo-linea {
