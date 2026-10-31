@@ -3,7 +3,9 @@
     ViewData["Title"] = ViewData["Title"] ?? "Gestión de Inmuebles";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="contenedor-con-fondo-linea mb-4 inmuebles-module">
+    <h1 class="mb-4">@ViewData["Title"]</h1>
+</div>
 
 @if (TempData["Mensaje"] != null)
 {

@@ -4,11 +4,13 @@
     ViewData["Title"] = ViewData["Title"] ?? "Contratos";
 }
 
-<h2 class="mb-4">📑 Contratos</h2>
+<div class="contenedor-con-fondo-linea mb-4 contratos-module">
+    <h2 class="mb-4">📑 Contratos</h2>
 
-<p>
-    <a class="btn btn-success" asp-action="Create">➕ Nuevo Contrato</a>
-</p>
+    <p>
+        <a class="btn btn-success" asp-action="Create">➕ Nuevo Contrato</a>
+    </p>
+</div>
 
 <!-- 🔹 Mostrar errores de validación -->
 @if (!ViewData.ModelState.IsValid)

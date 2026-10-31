@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/navbar-uiverse.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/line-art.css" asp-append-version="true" />
 
     <link rel="stylesheet" href="~/InmobiliariaApp.styles.css" asp-append-version="true" />
     <!-- 🔹 Bootstrap Icons -->
@@ -23,9 +24,7 @@
     {
         <link rel="stylesheet" href="~/css/register-uiverse.css" asp-append-version="true" />
     }
-</head>
-
-<body>
+</head>    <body class="layout-fondo-linea">
     <header>
     <nav class="navbar navbar-expand-sm navbar-light bg-white border-bottom box-shadow mb-3">
         <div class="container-fluid">
@@ -128,7 +127,7 @@
     }
     else
     {
-        <div class="container">
+            <div class="container">
             <main role="main" class="pb-3">
                 @RenderBody()
             </main>
