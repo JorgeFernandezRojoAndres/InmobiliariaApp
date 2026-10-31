@@ -707,14 +707,15 @@ public bool ExisteContratoVigenteParaInmueble(int idInmueble, DateTime desde, Da
     cmd.Parameters.AddWithValue("@idInmueble", idInmueble);
     cmd.Parameters.AddWithValue("@desde", desde);
     cmd.Parameters.AddWithValue("@hasta", hasta);
-    cmd.Parameters.AddWithValue("@contratoIdIgnorar", contratoIdIgnorar ?? DBNull.Value);
+    
+    // ✅ Línea corregida para evitar el error con DBNull
+    cmd.Parameters.AddWithValue("@contratoIdIgnorar", contratoIdIgnorar.HasValue ? contratoIdIgnorar.Value : DBNull.Value);
 
     connection.Open();
     var count = Convert.ToInt32(cmd.ExecuteScalar());
 
     return count > 0;
 }
-
         public int RenovarContrato(int idContratoOriginal, DateTime nuevaFechaInicio, DateTime nuevaFechaFin, decimal nuevoMonto, int idPropietario)
 {
     // 1) Obtener contrato original
