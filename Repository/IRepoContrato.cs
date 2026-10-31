@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using InmobiliariaApp.Models;
 
@@ -29,7 +28,7 @@ namespace InmobiliariaApp.Repository
         IList<Contrato> ObtenerFinalizadosPorPropietario(int idPropietario);
         IList<Contrato> ObtenerTodosPorPropietario(int idPropietario);
 
-        // ✅ NUEVO para evitar renovar si hay otro contrato vigente
-        bool ExisteContratoVigenteParaInmueble(int idInmueble, int idContratoActual);
+        // ✅ NUEVO: búsqueda por texto
+        IList<Contrato> ObtenerConTexto(string texto);
     }
 }

@@ -25,7 +25,7 @@ namespace InmobiliariaApp.Controllers
         }
 
         [Authorize(Roles = "Propietario,Administrador,Empleado")]
-        public IActionResult Index(DateTime? inicio, DateTime? fin, int? propietarioId)
+        public IActionResult Index(DateTime? inicio, DateTime? fin, int? propietarioId, string buscar = "")
         {
             IList<Contrato> contratos;
 
@@ -66,17 +66,34 @@ namespace InmobiliariaApp.Controllers
                 }
             }
 
-            // 🔹 Filtrar por fechas (si están definidas)
-            if (inicio.HasValue && fin.HasValue && inicio <= fin)
+            // 🔹 Búsqueda de texto (dirección, inquilino, propietario)
+            if (!string.IsNullOrWhiteSpace(buscar))
             {
-                contratos = contratos
-                    .Where(c => c.FechaInicio >= inicio.Value && c.FechaFin <= fin.Value)
-                    .ToList();
-                ViewData["Title"] = $"Contratos entre {inicio:dd/MM/yyyy} y {fin:dd/MM/yyyy}";
+                contratos = repo.ObtenerConTexto(buscar);
+
+                if (propietarioId.HasValue && propietarioId.Value > 0)
+                {
+                    contratos = contratos
+                        .Where(c => c.Inmueble != null && c.Inmueble.PropietarioId == propietarioId.Value)
+                        .ToList();
+                }
+
+                if (inicio.HasValue && fin.HasValue && inicio <= fin)
+                {
+                    contratos = contratos
+                        .Where(c => c.FechaInicio >= inicio.Value && c.FechaFin <= fin.Value)
+                        .ToList();
+                }
             }
             else
             {
-                ViewData["Title"] = esPropietario ? "Contratos" : "Contratos";
+                // 🔹 Filtrar por fechas (solo si no hay búsqueda)
+                if (inicio.HasValue && fin.HasValue && inicio <= fin)
+                {
+                    contratos = contratos
+                        .Where(c => c.FechaInicio >= inicio.Value && c.FechaFin <= fin.Value)
+                        .ToList();
+                }
             }
 
             return View(contratos);
@@ -126,6 +143,19 @@ namespace InmobiliariaApp.Controllers
             }
             ViewData["Title"] = "Contratos del Inmueble";
             return View("Index", lista); // reutilizamos Index.cshtml
+        }
+
+        [HttpGet]
+        public IActionResult Buscar(string q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            var contratos = repo.ObtenerConTexto(q);
+            ViewData["Title"] = $"Resultados de búsqueda: {q}";
+            return View("Index", contratos);
         }
 
         public IActionResult Details(int id)
@@ -293,7 +323,7 @@ namespace InmobiliariaApp.Controllers
                 .Select(im => new
                 {
                     Id = im.Id,
-                    Display = $"{im.Direccion} - {im.TipoNombre} (${im.Precio}) - Propietario: {im.NombrePropietario}"
+                    Display = $"{im.Direccion} - {im.TipoNombre} (${im.Precio}) | Propietario: {im.NombrePropietario}"
                 }).ToList();
 
             ViewBag.Inquilinos = new SelectList(inquilinos, "Id", "Display", inquilinoId);

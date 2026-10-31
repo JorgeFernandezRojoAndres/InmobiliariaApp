@@ -84,9 +84,14 @@ namespace InmobiliariaApp.Repository
 
         public IList<Contrato> ObtenerTodos()
         {
+            return ObtenerConTexto("");
+        }
+
+        public IList<Contrato> ObtenerConTexto(string texto)
+        {
             var lista = new List<Contrato>();
             using var connection = new MySqlConnection(_connectionString);
-            const string sql = @"
+            string sql = @"
         SELECT 
             c.Id, c.InquilinoId, c.InmuebleId, c.FechaInicio, c.FechaFin, 
             c.MontoMensual, c.Estado,
@@ -99,10 +104,43 @@ namespace InmobiliariaApp.Repository
         INNER JOIN tipos_inmuebles ti ON i.TipoId = ti.Id
         INNER JOIN personas p ON i.PropietarioId = p.Id
         INNER JOIN personas inq ON c.InquilinoId = inq.Id
-        WHERE @inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId;";
+        WHERE (@inmobiliariaId IS NULL OR c.InmobiliariaId = @inmobiliariaId)";
+
+            var parameters = new List<MySqlParameter>
+            {
+                new MySqlParameter("@inmobiliariaId", DBNull.Value)
+            };
+
+            if (!string.IsNullOrWhiteSpace(texto))
+            {
+                sql += " AND ("
+                     + "LOWER(i.Direccion) LIKE LOWER(@buscarDireccion) OR "
+                     + "LOWER(inq.Nombre) LIKE LOWER(@buscarInquilino) OR "
+                     + "LOWER(inq.Apellido) LIKE LOWER(@buscarInquilino) OR "
+                     + "LOWER(p.Nombre) LIKE LOWER(@buscarPropietario) OR "
+                     + "LOWER(p.Apellido) LIKE LOWER(@buscarPropietario)"
+                     + ")";
+
+                string like = $"%{texto.ToLower().Trim()}%";
+
+                parameters.AddRange(new MySqlParameter[]
+                {
+                    new MySqlParameter("@buscarDireccion", like),
+                    new MySqlParameter("@buscarInquilino", like),
+                    new MySqlParameter("@buscarPropietario", like)
+                });
+            }
+
+            sql += " ORDER BY c.FechaInicio DESC;";
 
             using var command = new MySqlCommand(sql, connection);
             AgregarFiltroInmobiliaria(command);
+
+            foreach (var p in parameters)
+            {
+                command.Parameters.Add(p);
+            }
+
             connection.Open();
 
             using var reader = command.ExecuteReader();
