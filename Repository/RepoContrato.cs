@@ -691,7 +691,7 @@ public IList<Contrato> ObtenerTodosPorPropietario(int idPropietario)
 
     return lista;
 }
-public bool ExisteContratoVigenteParaInmueble(int idInmueble, int idContratoActual)
+public bool ExisteContratoVigenteParaInmueble(int idInmueble, DateTime desde, DateTime hasta, int? contratoIdIgnorar = null)
 {
     using var connection = new MySqlConnection(_connectionString);
     var sql = @"
@@ -699,11 +699,15 @@ public bool ExisteContratoVigenteParaInmueble(int idInmueble, int idContratoActu
         FROM contratos 
         WHERE InmuebleId = @idInmueble
           AND Estado = 'Vigente'
-          AND Id != @idContratoActual";
+          AND FechaInicio <= @hasta
+          AND FechaFin >= @desde
+          AND (@contratoIdIgnorar IS NULL OR Id != @contratoIdIgnorar)";
 
     using var cmd = new MySqlCommand(sql, connection);
     cmd.Parameters.AddWithValue("@idInmueble", idInmueble);
-    cmd.Parameters.AddWithValue("@idContratoActual", idContratoActual);
+    cmd.Parameters.AddWithValue("@desde", desde);
+    cmd.Parameters.AddWithValue("@hasta", hasta);
+    cmd.Parameters.AddWithValue("@contratoIdIgnorar", contratoIdIgnorar ?? DBNull.Value);
 
     connection.Open();
     var count = Convert.ToInt32(cmd.ExecuteScalar());

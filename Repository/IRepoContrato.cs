@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using InmobiliariaApp.Models;
 
@@ -30,5 +31,8 @@ namespace InmobiliariaApp.Repository
 
         // ✅ NUEVO: búsqueda por texto
         IList<Contrato> ObtenerConTexto(string texto);
+
+        // ✅ NUEVO: verificar si existe un contrato vigente para un inmueble
+        bool ExisteContratoVigenteParaInmueble(int idInmueble, DateTime desde, DateTime hasta, int? contratoIdIgnorar = null);
     }
 }

@@ -139,8 +139,9 @@ public IActionResult RenovarContrato(
 
         int idPropietario = int.Parse(claim.Value);
 
-        // ✅ Validar que no exista otro contrato vigente para este inmueble
-        bool existeContratoVigente = _repo.ExisteContratoVigenteParaInmueble(contrato.IdInmueble, id);
+        
+        // ✅ Validar que no exista otro contrato vigente para este inmueble en el nuevo periodo
+        bool existeContratoVigente = _repo.ExisteContratoVigenteParaInmueble(contrato.IdInmueble, fechaInicio, fechaFin, contrato.Id);  
         if (existeContratoVigente)
         {
             return BadRequest(new { 
